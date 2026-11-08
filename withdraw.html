@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Your submission — EP / 37</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="forms.css" />
+    <script defer src="forms.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">ep<span>/37</span></a>
+      <nav><a href="/">Back to the archive ↗</a></nav>
+    </header>
+    <main class="manage-page">
+      <p class="form-kicker">Your private submission link</p>
+      <h1>Your story.<br />Your choice.</h1>
+      <p id="withdrawStatus" class="status" role="status">
+        Checking your submission…
+      </p>
+      <div id="withdrawControls" hidden>
+        <p>
+          Withdrawing deletes your name, quote, description, and photo from our
+          database and removes the profile from the live archive. Copies already
+          saved by visitors cannot be recalled.
+        </p>
+        <button id="withdrawButton" class="outline-button danger">
+          Withdraw my submission
+        </button>
+      </div>
+      <section id="withdrawConfirm" hidden>
+        <h2>Remove this story?</h2>
+        <p>
+          This permanently deletes the submission. To return to the yearbook,
+          you'll need to submit it again.
+        </p>
+        <div class="action-row">
+          <button id="confirmWithdraw" class="solid-button">
+            Yes, remove my story</button
+          ><button id="cancelWithdraw" class="outline-button">
+            Keep my story
+          </button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

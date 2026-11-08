@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Add your story — EP / 37</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="forms.css" />
+    <script defer src="forms.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">ep<span>/37</span></a>
+      <p>Engineering Physics<br />NIT Calicut</p>
+      <nav><a href="/">Back to the archive ↗</a></nav>
+    </header>
+    <main class="form-page">
+      <div class="form-intro">
+        <p class="form-kicker">Your page in the yearbook</p>
+        <h1>A little of you.<br />Kept for later.</h1>
+        <p>
+          A face, a few words, and a line you'd like to remember. Your story
+          stays private until a batch admin reviews it.
+        </p>
+      </div>
+      <section class="form-panel">
+        <form id="submissionForm">
+          <div class="field-row">
+            <label
+              >Your name<input
+                name="name"
+                autocomplete="name"
+                required
+                minlength="2"
+                maxlength="80"
+                placeholder="As you'd like it to appear" /></label
+            ><label
+              >Initials <span>(optional)</span
+              ><input name="initials" maxlength="4" placeholder="DA"
+            /></label>
+          </div>
+          <label
+            >Your line<textarea
+              name="quote"
+              required
+              maxlength="240"
+              rows="3"
+              placeholder="Something that sounds like you."
+            ></textarea
+            ><span>Up to 240 characters.</span></label
+          ><label
+            >You, in a few words<input
+              name="property"
+              required
+              maxlength="60"
+              placeholder="Always curious"
+            /><span>A short description. Up to 60 characters.</span></label
+          ><label
+            >A photo <span>(optional)</span
+            ><input
+              id="photoInput"
+              name="photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+            /><span
+              >JPEG, PNG, or WebP. Up to 8 MB and 25 megapixels. Initials work
+              too.</span
+            ></label
+          ><img
+            id="photoPreview"
+            class="photo-preview"
+            alt="Your selected photo"
+            hidden
+          />
+          <div class="consent-box">
+            <label
+              ><input
+                name="consent"
+                type="checkbox"
+                value="true"
+                required
+              /><span
+                >I am submitting my own details and agree to publish my name,
+                quote, description, and photo on this public batch archive after
+                admin approval.</span
+              ></label
+            >
+            <p>
+              You can withdraw your submission using the private link provided
+              after you submit. Save it: we don't collect an email address and
+              cannot email it to you. Uploaded photos are resized and their
+              metadata is removed.
+            </p>
+          </div>
+          <p
+            id="formStatus"
+            class="status"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <button type="submit" class="solid-button">Send for review ↗</button>
+        </form>
+        <section id="submissionSuccess" hidden tabindex="-1">
+          <p class="form-kicker">Story received</p>
+          <h2>You're in the queue.</h2>
+          <p>
+            Your profile is private until an admin approves it. Save the link
+            below to check its status or withdraw it later.
+          </p>
+          <label
+            >Your private management link<input id="privateLink" readonly
+          /></label>
+          <div class="action-row">
+            <button id="copyLink" class="solid-button">Copy link</button
+            ><button id="saveReceipt" class="outline-button">
+              Download receipt
+            </button>
+          </div>
+          <p class="small-note">
+            Anyone with this private link can remove your submission. Keep it to
+            yourself.
+          </p>
+          <a href="/">Back to the archive ↗</a>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

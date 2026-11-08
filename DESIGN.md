@@ -1,29 +1,38 @@
-# Design direction
+# EP / 37: quote yearbook
 
-Local redesign guided by Anthropic's frontend-design skill:
-https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md
+## Research actually visited
 
-Palette: paper #eef1f5, ink #172747, blue #234bc0, mist #dce4f2,
-lilac #dcd7ee, white #ffffff. Barlow Condensed for large headings and
-symbols; DM Sans for reading and controls, with system fallbacks.
+- Awwwards Site of the Day listing: https://www.awwwards.com/sites/a24
+- Live A24 experimental archive: https://a24.raviklaassens.com/
+- Awwwards Site of the Day listing: https://www.awwwards.com/sites/signal-a-studio
+- Live Signal-A Studio: https://signal-a.studio/
 
-Layout: left-aligned fieldbook with an asymmetric introduction, a custom
-interference-wave plate, and a compact specimen grid. On mobile, the plate
-follows the introduction and the grid becomes two columns.
+The award listings were inspected through the shared browser. Its screenshot
+capture repeatedly timed out; both live websites were then visually inspected in
+headless Chromium. No artwork, photographs, code, or copy was taken from them.
 
-    identity                         people / about
-    large title                 interference plate
-    introduction                EP specimen
-    people heading              view controls
-    populated profiles + clearly marked empty places
-    about this archive          collection guidance
+A24's disc archive suggests a collection can feel like a set of objects rather
+than a grid of UI components. Signal-A uses large contrasting type to compose a
+page, leaving its navigation quiet. This revision translates those ideas into
+stacked, clickable quote cards and a full-width typographic opening.
 
-Review: retain the original physics concept but replace the generic cream
-serif treatment and decorative giant number with a blue fieldbook and wave
-study. Numbers identify actual profile positions. No invented classmates,
-photos, dates, or memories. The 37-place layout is a concept preview, not a
-claim of completed collection. Keep the dependency-free static site.
+## New direction
 
-## Dark revision
+A digital yearbook: charcoal #141414, paper #f1eee6, and muted cream #dfddce,
+peach #e3ad91, and lilac #c3bbd3 for the stories. DM Sans is the structural type;
+Instrument Serif gives quotations their own voice. The quotations and core copy
+from the previous site are retained.
 
-Charcoal #191a1c, surface #252629, ivory #e9e7e2, muted silver #a4a5aa, olive grey #c7c7b7. Instrument Serif headings with Manrope body text. A compact four-column collection replaces the extensive empty grid. The wave plate loses its colored background and rotation. Original light revision remains on design/editorial-archive.
+The old wave plate, periodic-table placeholders, and lab-record layout are removed.
+The hero is now a full-width typographic composition above a small deck of real
+profile quotes. Gallery shows those stories as posters; Index provides a compact
+alternative. Empty places are represented by a count rather than blank cards.
+There are no invented photos or additional fictional classmates. Uploaded portraits
+replace the typographic poster background.
+
+The quote deck is action-driven, not autoplaying. Reduced motion disables its
+transitions. Native dialogs preserve keyboard handling and focus restoration.
+The design works without WebGL, canvas, a build step, or a frontend framework.
+
+The Anthropic frontend-design skill guided the initial version. This revision
+follows the user's direction to explore beyond that initial treatment.

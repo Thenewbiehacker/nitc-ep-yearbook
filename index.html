@@ -2,158 +2,106 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#191a1c" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#141414" />
     <meta
       name="description"
-      content="A student-made keepsake for the Engineering Physics batch at NIT Calicut. Thirty-seven people, one shared story."
+      content="Thirty-seven people. One Engineering Physics batch. A student-made NIT Calicut yearbook."
     />
-    <title>EP / 37 — A batch in good company</title>
+    <title>EP / 37 — Same wavelength</title>
     <link rel="stylesheet" href="style.css" />
     <script defer src="students.js"></script>
     <script defer src="app.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#people">Skip to the batch</a>
-    <header class="site-header" id="top">
+    <header id="top">
       <a class="brand" href="#top" aria-label="EP 37 home"
-        >ep<span>/37</span><i aria-hidden="true"></i
-      ></a>
-      <span class="identity">Engineering Physics<br />NIT Calicut</span>
+        >ep<span>/37</span></a
+      >
+      <p>Engineering Physics<br />NIT Calicut</p>
       <nav aria-label="Main navigation">
-        <a href="#people">The batch</a><a href="#about">The idea</a>
+        <a href="#people">The people <span>↗</span></a
+        ><a href="#about">The idea <span>↗</span></a>
       </nav>
-      <span class="header-note">A student-made archive</span>
+      <a class="header-end" href="submit.html">Add your story ↗</a>
     </header>
     <main>
       <section class="hero" aria-labelledby="heroTitle">
-        <div class="hero-copy">
-          <p class="intro-label">
-            <span aria-hidden="true"></span> In good company
-          </p>
-          <h1 id="heroTitle">Different people.<br />Same wavelength.</h1>
-          <p class="intro">
-            Thirty-seven ways of looking at the world.<br />One Engineering
-            Physics batch to remember.
-          </p>
-          <a href="#people" class="primary-link"
-            >Meet the batch <span aria-hidden="true">↗</span></a
-          >
-          <p class="hero-footnote">For the people behind the lab records.</p>
+        <div class="hero-meta">
+          <span>An unofficial batch archive</span
+          ><span>37 people / one shared chapter</span>
         </div>
-        <figure class="wave-plate">
-          <div class="plate-top">
-            <span>A study in togetherness</span><span>Fig. 37</span>
-          </div>
-          <svg
-            class="wave-art"
-            viewBox="0 0 500 400"
-            role="img"
-            aria-label="Intersecting silver wave paths forming a shared field"
+        <h1 id="heroTitle">
+          <span>Different people.</span
+          ><span class="second-line"
+            >Same wavelength<span class="period">.</span></span
           >
-            <defs>
-              <pattern
-                id="graph"
-                width="25"
-                height="25"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M25 0H0V25"
-                  fill="none"
-                  stroke="#234bc0"
-                  stroke-opacity=".1"
-                />
-              </pattern>
-              <clipPath id="waveClip">
-                <rect width="500" height="400" />
-              </clipPath>
-            </defs>
-            <rect width="500" height="400" fill="url(#graph)" />
-            <g
-              id="wavePaths"
-              clip-path="url(#waveClip)"
-              fill="none"
-              stroke="#234bc0"
-              stroke-width="1.15"
-            ></g>
-            <circle cx="250" cy="200" r="57" fill="#234bc0" />
-            <text
-              x="250"
-              y="220"
-              text-anchor="middle"
-              fill="#fff"
-              font-family="Georgia,serif"
-              font-style="italic"
-              font-size="57"
+        </h1>
+        <div class="hero-stage">
+          <div class="hero-side">
+            <span class="tiny-cross" aria-hidden="true">✳</span>
+            <p>
+              Thirty-seven ways of<br />looking at the world.<br />One batch to
+              remember.
+            </p>
+            <a href="#people" class="circle-link"
+              ><span>Meet the batch</span><b aria-hidden="true">↓</b></a
             >
-              ep
-            </text>
-          </svg>
-          <figcaption>
-            <span>Individual frequencies.<br />A collective resonance.</span
-            ><span class="plate-symbol" aria-hidden="true">≈</span>
-          </figcaption>
-        </figure>
-      </section>
-      <div class="archive-strip">
-        <span>37 people</span><span>One shared chapter</span
-        ><span>Countless stories to come</span>
-      </div>
-      <section id="people" class="people" aria-labelledby="sectionTitle">
-        <div class="section-head">
-          <div>
-            <p class="section-kicker">Meet the batch</p>
-            <h2 id="sectionTitle">The elements of us.</h2>
           </div>
-          <p id="sectionDesc">
-            A small table of very different personalities.<br />Open an element.
-            Get to know the person.
+          <div class="deck-area">
+            <div
+              id="quoteDeck"
+              class="quote-deck"
+              aria-label="Featured batch quotes"
+            ></div>
+            <div class="deck-controls">
+              <button id="shuffleBtn" aria-label="Show next quote">
+                Shuffle the stories <span aria-hidden="true">↻</span></button
+              ><span id="deckPosition" aria-live="polite"></span>
+            </div>
+          </div>
+          <p class="hero-aside">
+            For the people<br />behind the lab records.<span
+              >Open a card.<br />There's a person inside.</span
+            >
           </p>
         </div>
-        <div class="toolbar">
+      </section>
+      <section id="people" class="people" aria-labelledby="sectionTitle">
+        <div class="collection-heading">
+          <h2 id="sectionTitle">In good company<span> (37)</span></h2>
           <div
             class="view-switch"
             role="group"
             aria-label="Choose archive layout"
           >
-            <button id="tableBtn" aria-pressed="true">
-              <span aria-hidden="true">▦</span> Periodic table</button
-            ><button id="recordBtn" aria-pressed="false">
-              <span aria-hidden="true">☷</span> Lab record
-            </button>
+            <button id="tableBtn" aria-pressed="true">Gallery</button
+            ><button id="recordBtn" aria-pressed="false">Index</button>
           </div>
-          <button id="randomBtn" class="text-button">
-            Meet someone at random <span aria-hidden="true">↗</span>
-          </button>
         </div>
-        <div class="sample-note">
-          <span class="status-dot" aria-hidden="true"></span>
-          <p id="sampleNote">
-            Concept preview: three fictional profiles. The rest of the batch is
-            still to come.
-          </p>
+        <div class="collection-meta">
+          <p id="sampleNote"></p>
+          <button id="randomBtn">Meet someone at random ↗</button>
         </div>
         <div id="grid" class="grid"></div>
-        <p id="mobileRemainder" class="mobile-remainder"></p>
-        <div class="grid-footer">
-          <span
-            ><i class="legend-dot" aria-hidden="true"></i>
-            <span id="profileCount">3 sample profiles</span></span
-          ><span>Room for everyone's story.</span>
+        <p id="loadStatus" class="load-status" role="status"></p>
+        <a class="contribute-link" href="submit.html"
+          >Your story belongs here. Add it to the archive ↗</a
+        >
+        <div class="collection-bottom">
+          <span id="profileCount"></span><span id="remainingCount"></span>
         </div>
       </section>
       <section id="about" class="about" aria-labelledby="aboutTitle">
+        <div class="about-label">Why we're keeping this</div>
         <div>
-          <p class="section-kicker">More than a class list</p>
           <h2 id="aboutTitle">A little of us.<br />Kept for later.</h2>
-        </div>
-        <div class="about-copy">
           <p>
             Someday, the lab reports will be hard to find. The people who helped
             you finish them shouldn't be.
           </p>
-          <p>
+          <p class="about-small">
             This is a place for a face, a few words, and the things that make
             each of us unmistakably us. A small keepsake from our time at NIT
             Calicut.
@@ -168,16 +116,20 @@
             </p>
           </details>
         </div>
+        <span class="about-star" aria-hidden="true">✳</span>
+      </section>
+      <section class="signoff" aria-label="Closing thought">
+        <p>Still reacting. Still becoming.</p>
+        <h2>Here's to the stories<br />we haven't made yet.</h2>
+        <a href="#top">Back to top ↑</a>
       </section>
     </main>
     <footer>
-      <a class="brand" href="#top">ep<span>/37</span></a>
-      <p>
-        Made by students. Kept for the batch.<br /><span
-          >An unofficial NIT Calicut Engineering Physics archive.</span
-        >
-      </p>
-      <a class="back-top" href="#top">Back to top ↑</a>
+      <a href="#top" class="footer-brand" aria-label="EP 37 home">ep/37</a>
+      <div>
+        <p>Made by students.<br />Kept for the batch.</p>
+        <p>An unofficial NIT Calicut<br />Engineering Physics archive.</p>
+      </div>
     </footer>
     <dialog id="profile" aria-labelledby="profileName">
       <button class="close" aria-label="Close profile">×</button>

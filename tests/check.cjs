@@ -14,7 +14,12 @@ const path = require("node:path");
   await page.goto(pathToFileURL(path.resolve(__dirname, "../index.html")).href);
   await page.locator(".tile").first().waitFor();
   assert.equal(await page.locator(".tile").count(), 3);
-  assert.equal(await page.locator(".placeholder").count(), 34);
+  assert.equal(await page.locator(".placeholder").count(), 0);
+  await page.locator("#shuffleBtn").click();
+  assert.equal(await page.locator("#deckPosition").textContent(), "2 / 3");
+  await page.locator('.quote-card[data-slot="0"]').click();
+  assert.equal(await page.locator("#profileName").textContent(), "Student Two");
+  await page.keyboard.press("Escape");
   await page.locator(".tile").first().click();
   assert.equal(await page.locator("#profileName").textContent(), "Student One");
   await page.locator("#nextPerson").click();
@@ -37,7 +42,7 @@ const path = require("node:path");
   );
   assert.match(
     await page.locator(".tile").first().textContent(),
-    /Observation/,
+    /Always curious/,
   );
   await page.locator("#randomBtn").click();
   assert.equal(await page.locator("#profile").evaluate((el) => el.open), true);
@@ -85,7 +90,8 @@ const path = require("node:path");
     render();
   });
   assert.equal(await page.locator("#randomBtn").isDisabled(), true);
-  assert.equal(await page.locator(".empty-state").count(), 1);
+  assert.equal(await page.locator("#grid .empty-state").count(), 1);
+  assert.equal(await page.locator("#shuffleBtn").isDisabled(), true);
   assert.deepEqual(errors, []);
   await browser.close();
   console.log(

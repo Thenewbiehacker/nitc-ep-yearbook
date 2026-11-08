@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Review stories — EP / 37</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="forms.css" />
+    <script defer src="admin.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">ep<span>/37</span></a>
+      <p>Batch archive<br />Admin review</p>
+      <nav>
+        <a href="/">View archive ↗</a
+        ><button id="logout" hidden>Sign out</button>
+      </nav>
+    </header>
+    <main class="admin-page">
+      <div id="loginPanel" class="login-panel">
+        <p class="form-kicker">For the people keeping this together</p>
+        <h1>Review the stories.</h1>
+        <form id="loginForm">
+          <label
+            >Admin password<input
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              maxlength="256" /></label
+          ><button class="solid-button" type="submit">Sign in ↗</button>
+        </form>
+      </div>
+      <p id="adminStatus" class="status" role="status" aria-live="polite"></p>
+      <section id="reviewPanel" hidden>
+        <div class="collection-heading">
+          <h1>Review the stories.</h1>
+          <label
+            >Show<select id="statusFilter">
+              <option value="pending">Pending review</option>
+              <option value="approved">Published</option>
+              <option value="rejected">Rejected</option>
+            </select></label
+          >
+        </div>
+        <p class="small-note">
+          Check that each submission belongs to a classmate and that the photo
+          and text are appropriate before publishing. Approval makes all
+          submitted profile details public.
+        </p>
+        <div id="reviewList"></div>
+        <div class="action-row pagination">
+          <button id="previousPage" class="outline-button">← Previous</button
+          ><span id="pageInfo"></span
+          ><button id="nextPage" class="outline-button">Next →</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -13,19 +13,31 @@ const esc = (value) =>
       ],
   );
 
-// Keep the artwork local: a set of superimposed waves, with no image dependency.
-const waveGroup = document.querySelector("#wavePaths");
-for (let line = 0; line < 32; line++) {
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  let d = "";
-  for (let x = -10; x <= 510; x += 4) {
-    const envelope = Math.sin((x / 500) * Math.PI);
-    const y =
-      200 + (line - 15.5) * 7 + Math.sin(x / 78 + line * 0.13) * 90 * envelope;
-    d += `${x === -10 ? "M" : "L"}${x},${y.toFixed(2)} `;
+let deckIndex = 0;
+function renderDeck() {
+  const deck = document.querySelector("#quoteDeck");
+  deck.replaceChildren();
+  const count = Math.min(3, students.length);
+  for (let slot = count - 1; slot >= 0; slot--) {
+    const index = (deckIndex + slot) % students.length;
+    const person = students[index];
+    const card = document.createElement("button");
+    card.className = "quote-card";
+    card.dataset.slot = slot;
+    card.dataset.tone = index % 3;
+    card.setAttribute("aria-label", `Read ${person.name}'s story`);
+    card.tabIndex = slot === 0 ? 0 : -1;
+    card.innerHTML = `<span class="card-top"><span>EP / 37</span><span>${person.example ? "Sample story" : "The batch archive"}</span></span><span class="card-quote">“${esc(person.quote || "Their story is coming soon.")}”</span><span class="card-bottom"><span>${esc(person.name)}</span><span>Open story ↗</span></span>`;
+    card.addEventListener("click", () => showPerson(index));
+    deck.append(card);
   }
-  path.setAttribute("d", d);
-  waveGroup.append(path);
+  if (!count)
+    deck.innerHTML =
+      '<p class="empty-state">The first story is still to come.</p>';
+  document.querySelector("#deckPosition").textContent = count
+    ? `${deckIndex + 1} / ${students.length}`
+    : "";
+  document.querySelector("#shuffleBtn").disabled = students.length < 2;
 }
 
 function showPerson(index) {
@@ -37,7 +49,7 @@ function showPerson(index) {
       ${person.photo ? `<img src="${esc(person.photo)}" alt="Portrait of ${esc(person.name)}">` : ""}
       <small class="portrait-label">${person.photo ? "" : "A portrait will go here"}</small>
     </div>
-    <div class="profile-copy"><p class="section-kicker">${mode === "table" ? "Element" : "Experiment"} ${String(activeIndex + 1).padStart(2, "0")}</p>
+    <div class="profile-copy"><p class="section-kicker">Story ${String(activeIndex + 1).padStart(2, "0")}</p>
       <h2 id="profileName">${esc(person.name || "Name to come")}</h2>
       <p class="property">${esc(person.property || "A story in the making")}</p>
       <blockquote>“${esc(person.quote || "Their story is coming soon.")}”</blockquote>
@@ -65,12 +77,6 @@ function render() {
   document
     .querySelector("#recordBtn")
     .setAttribute("aria-pressed", String(mode === "record"));
-  document.querySelector("#sectionTitle").textContent =
-    mode === "table" ? "The elements of us." : "The class record.";
-  document.querySelector("#sectionDesc").textContent =
-    mode === "table"
-      ? "A small table of very different personalities. Open an element. Get to know the person."
-      : "The people behind the observations. Open a record to read their story.";
   const examples = students.filter((person) => person.example).length;
   document.querySelector("#sampleNote").textContent = examples
     ? `Concept preview: ${examples} fictional ${examples === 1 ? "profile" : "profiles"}. ${students.length < batchSize ? "The rest of the batch is still to come." : "Explore the archive below."}`
@@ -82,7 +88,7 @@ function render() {
   document.querySelector("#randomBtn").disabled = !students.length;
   grid.className = `grid ${mode}`;
   grid.replaceChildren();
-  document.querySelector("#mobileRemainder").textContent =
+  document.querySelector("#remainingCount").textContent =
     students.length < batchSize
       ? `${batchSize - students.length} places are waiting for their stories.`
       : "";
@@ -102,19 +108,15 @@ function render() {
     );
     tile.innerHTML =
       mode === "table"
-        ? `<span class="number">${String(index + 1).padStart(2, "0")}</span><span class="tile-arrow" aria-hidden="true">↗</span><strong>${esc(person.initials || "?")}</strong><span class="name">${esc(person.name)}</span><small>${esc(person.property || "Story coming soon")}</small>`
-        : `<span class="number">Experiment ${String(index + 1).padStart(2, "0")}</span><span class="tile-arrow" aria-hidden="true">↗</span><strong>${esc(person.name)}</strong><span class="record-line">Observation: ${esc(person.property || "Story coming soon")}</span><small>Read their story</small>`;
+        ? `<span class="poster"><span class="poster-top"><span>EP / ${String(index + 1).padStart(2, "0")}</span><span>${esc(person.property || "A story in the making")}</span></span><span class="poster-symbol" aria-hidden="true">${esc(person.initials || "?")}</span>${person.photo ? `<img src="${esc(person.photo)}" alt="Portrait of ${esc(person.name)}" loading="lazy">` : ""}<span class="poster-quote">“${esc(person.quote || "Their story is coming soon.")}”</span></span><span class="tile-footer"><span><strong>${esc(person.name)}</strong><small>${person.example ? "Sample profile" : "Engineering Physics"}</small></span><span aria-hidden="true">↗</span></span>`
+        : `<span class="number">${String(index + 1).padStart(2, "0")}</span><strong>${esc(person.name)}</strong><span class="record-line">${esc(person.property || "A story in the making")}</span><span class="tile-arrow" aria-hidden="true">↗</span>`;
+    const image = tile.querySelector("img");
+    if (image) image.addEventListener("error", () => image.remove());
     tile.addEventListener("click", () => showPerson(index));
     grid.append(tile);
   });
-  // Vacant places are not interactive and do not represent invented students.
-  for (let index = students.length; index < batchSize; index++) {
-    const placeholder = document.createElement("div");
-    placeholder.className = "placeholder";
-    placeholder.setAttribute("aria-hidden", "true");
-    placeholder.innerHTML = `<span class="number">${String(index + 1).padStart(2, "0")}</span><span class="placeholder-symbol">${mode === "table" ? "+" : "—"}</span><small>Story to come</small>`;
-    grid.append(placeholder);
-  }
+  deckIndex = students.length ? deckIndex % students.length : 0;
+  renderDeck();
 }
 
 document.querySelector("#tableBtn").addEventListener("click", () => {
@@ -161,3 +163,30 @@ dialog.addEventListener("keydown", (event) => {
   }
 });
 render();
+
+document.querySelector("#shuffleBtn").addEventListener("click", () => {
+  if (!students.length) return;
+  deckIndex = (deckIndex + 1) % students.length;
+  renderDeck();
+});
+
+// Local file previews use fictional samples; the running server uses only approved profiles.
+if (location.protocol === "http:" || location.protocol === "https:") {
+  students.splice(0);
+  render();
+  const notice = document.querySelector("#loadStatus");
+  notice.textContent = "Loading the batch archive…";
+  fetch("/api/profiles")
+    .then(async (response) => {
+      if (!response.ok) throw new Error("Archive unavailable");
+      const data = await response.json();
+      if (!Array.isArray(data.profiles)) throw new Error("Invalid archive");
+      students.splice(0, students.length, ...data.profiles);
+      render();
+      notice.textContent = "";
+    })
+    .catch(() => {
+      notice.textContent =
+        "The archive could not be loaded. Refresh to try again.";
+    });
+}

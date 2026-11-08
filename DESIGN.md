@@ -23,3 +23,7 @@ serif treatment and decorative giant number with a blue fieldbook and wave
 study. Numbers identify actual profile positions. No invented classmates,
 photos, dates, or memories. The 37-place layout is a concept preview, not a
 claim of completed collection. Keep the dependency-free static site.
+
+## Dark revision
+
+Charcoal #191a1c, surface #252629, ivory #e9e7e2, muted silver #a4a5aa, olive grey #c7c7b7. Instrument Serif headings with Manrope body text. A compact four-column collection replaces the extensive empty grid. The wave plate loses its colored background and rotation. Original light revision remains on design/editorial-archive.

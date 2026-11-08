@@ -47,3 +47,10 @@ mobile overflow, escaped content, and empty data. With Playwright installed, run
 `node tests/check.cjs`; optionally set `CHROMIUM_PATH` to an existing Chromium
 executable. Screenshot outputs go to `/tmp/ep-archive-1440.png` and
 `/tmp/ep-archive-390.png`.
+
+## Dark edition
+
+The active design is on `design/dark-archive`: charcoal surfaces, Instrument
+Serif headings, Manrope body text, silver wave artwork, and a compact profile
+collection. Only a small preview of vacant places is shown; all actual profiles
+remain visible. The earlier blue design remains on `design/editorial-archive`.

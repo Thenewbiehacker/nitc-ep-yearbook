@@ -11,6 +11,12 @@ function database() {
       "utf8",
     ),
   );
+  db.exec(
+    readFileSync(
+      new URL("../migrations/0002_birthday.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   return {
     prepare(sql) {
       return {
@@ -88,6 +94,7 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
     name: "Alice Example",
     quote: "Hello",
     property: "Kind",
+    birthday: "02-29",
     consent: "true",
   }))
     form.set(k, v);
@@ -124,7 +131,9 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
     ).status,
     200,
   );
-  assert.equal((await (await call("/api/profiles")).json()).profiles.length, 1);
+  const approved = (await (await call("/api/profiles")).json()).profiles;
+  assert.equal(approved.length, 1);
+  assert.equal(approved[0].birthday, "02-29");
   assert.equal(
     (await call(`/api/photos/${id}`)).headers.get("content-type"),
     "image/jpeg",
@@ -182,4 +191,37 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
     (await call("/api/submissions/999", { method: "DELETE" })).status,
     429,
   );
+});
+
+test("birthdays reject invalid dates and accept missing values", async () => {
+  const env = {
+    DB: database(),
+    ADMIN_PASSWORD: "a secure password 123",
+    ASSETS: { fetch: async () => new Response("asset") },
+  };
+  for (const [birthday, expected] of [
+    ["02-30", 400],
+    ["04-31", 400],
+    ["02-29", 201],
+    ["", 201],
+  ]) {
+    const form = new FormData();
+    for (const [key, value] of Object.entries({
+      name: "Test Student",
+      quote: "Hi",
+      property: "Kind",
+      consent: "true",
+      birthday,
+    }))
+      form.set(key, value);
+    const response = await worker.fetch(
+      new Request("https://example.test/api/submissions", {
+        method: "POST",
+        headers: { Origin: "https://example.test" },
+        body: form,
+      }),
+      env,
+    );
+    assert.equal(response.status, expected, birthday);
+  }
 });

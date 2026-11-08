@@ -40,6 +40,11 @@ const { randomBytes } = require("node:crypto");
     );
     for (const statement of sql.split(";").filter((x) => x.trim()))
       await db.prepare(statement).run();
+    await db
+      .prepare(
+        readFileSync(path.resolve("migrations/0002_birthday.sql"), "utf8"),
+      )
+      .run();
   } else {
     const { createApp } = await import("../backend/app.js");
     origin = "http://127.0.0.1:43187";
@@ -81,13 +86,12 @@ const { randomBytes } = require("node:crypto");
     })
       .png()
       .toBuffer();
-    await page
-      .locator("#photoInput")
-      .setInputFiles({
-        name: "test-portrait.png",
-        mimeType: "image/png",
-        buffer: portrait,
-      });
+    await page.locator("#photoInput").setInputFiles({
+      name: "test-portrait.png",
+      mimeType: "image/png",
+      buffer: portrait,
+    });
+    await page.locator("[name=birthday]").fill("02-29");
     await page.locator("[name=consent]").check();
     await page.getByRole("button", { name: "Send for review" }).click();
     await page.locator("#submissionSuccess").waitFor({ state: "visible" });
@@ -110,11 +114,18 @@ const { randomBytes } = require("node:crypto");
     const metadata = await sharp(await uploaded.body()).metadata();
     assert.ok(metadata.width <= 1000 && metadata.height <= 1200);
     assert.equal(metadata.exif, undefined);
+    assert.match(await page.locator("#reviewList").textContent(), /02-29/);
     await page.getByRole("button", { name: "Approve & publish" }).click();
     await page.getByText("No submissions in this view.").waitFor();
     await page.goto(origin);
     await page.locator(".tile").waitFor();
     assert.equal(await page.locator(".tile").count(), 1);
+    await page.locator(".tile").click();
+    assert.match(
+      await page.locator("#profileContent").textContent(),
+      /29 February/,
+    );
+    await page.keyboard.press("Escape");
     assert.match(
       await page.locator(".tile").textContent(),
       /Browser Test Student/,

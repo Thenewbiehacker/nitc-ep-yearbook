@@ -956,3 +956,9 @@ blockquote {
 .credit-link:hover {
   color: var(--ink);
 }
+
+.birthday {
+  font-size: 12px;
+  color: #606259;
+  margin-top: 20px;
+}

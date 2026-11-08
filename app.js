@@ -40,6 +40,25 @@ function renderDeck() {
   document.querySelector("#shuffleBtn").disabled = students.length < 2;
 }
 
+function formatBirthday(value) {
+  const [month, day] = value.split("-").map(Number);
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  return `${day} ${months[month - 1]}`;
+}
+
 function showPerson(index) {
   if (!students.length) return;
   activeIndex = (index + students.length) % students.length;
@@ -52,6 +71,7 @@ function showPerson(index) {
     <div class="profile-copy"><p class="section-kicker">Story ${String(activeIndex + 1).padStart(2, "0")}</p>
       <h2 id="profileName">${esc(person.name || "Name to come")}</h2>
       <p class="property">${esc(person.property || "A story in the making")}</p>
+      ${person.birthday ? `<p class="birthday">Birthday · ${esc(formatBirthday(person.birthday))}</p>` : ""}
       <blockquote>“${esc(person.quote || "Their story is coming soon.")}”</blockquote>
       <p class="caption">Engineering Physics, NIT Calicut<br>${person.example ? "Fictional profile · Concept preview" : "The batch archive"}</p>
     </div>`;

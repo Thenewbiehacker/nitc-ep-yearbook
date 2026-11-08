@@ -1,3 +1,13 @@
+function validBirthday(value) {
+  if (value == null || value === "") return true;
+  if (
+    typeof value !== "string" ||
+    !/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(value)
+  )
+    return false;
+  const [month, day] = value.split("-").map(Number);
+  return day <= [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+}
 const encoder = new TextEncoder();
 const hash = async (value) =>
   Array.from(
@@ -211,7 +221,7 @@ async function handle(req, env) {
   if (method === "GET" && path === "/api/profiles") {
     const { results } = await query(
       db,
-      "SELECT id,name,initials,quote,property,photo IS NOT NULL AS has_photo FROM submissions WHERE status='approved' ORDER BY id",
+      "SELECT id,name,initials,quote,property,birthday,photo IS NOT NULL AS has_photo FROM submissions WHERE status='approved' ORDER BY id",
     ).all();
     return json({
       profiles: results.map(({ has_photo, ...r }) => ({
@@ -245,7 +255,7 @@ async function handle(req, env) {
       headers: { "Content-Type": req.headers.get("Content-Type") || "" },
     }).formData();
     if (
-      [...form.entries()].length > 7 ||
+      [...form.entries()].length > 8 ||
       [...form.entries()].some(
         ([k, v]) =>
           ![
@@ -253,6 +263,7 @@ async function handle(req, env) {
             "initials",
             "quote",
             "property",
+            "birthday",
             "consent",
             "photo",
           ].includes(k) ||
@@ -274,6 +285,8 @@ async function handle(req, env) {
       return error(
         "Enter a name (2–80 characters), a quote (up to 240), a description (up to 60), and initials of up to 4 characters.",
       );
+    if (!validBirthday(form.get("birthday")))
+      return error("Enter a valid birthday in MM-DD format, such as 02-29.");
     if (form.get("consent") !== "true")
       return error("Your permission to publish is required.");
     let photo = null;
@@ -299,15 +312,16 @@ async function handle(req, env) {
       now = new Date().toISOString();
     const result = await query(
       db,
-      "INSERT INTO submissions(name,initials,quote,property,photo,photo_mime,withdrawal_hash,consent_version,consent_at,created_at) SELECT ?,?,?,?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM submissions)<200",
+      "INSERT INTO submissions(name,initials,quote,property,birthday,photo,photo_mime,withdrawal_hash,consent_version,consent_at,created_at) SELECT ?,?,?,?,?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM submissions)<200",
       name,
       initials,
       form.get("quote").trim(),
       form.get("property").trim(),
+      form.get("birthday") || null,
       photo ? Array.from(photo) : null,
       photo ? "image/jpeg" : null,
       await hash(secret),
-      "2026-11-08-v1",
+      "birthday-v2",
       now,
       now,
     ).run();
@@ -409,7 +423,7 @@ async function handle(req, env) {
         );
       const { results } = await query(
         db,
-        "SELECT id,name,initials,quote,property,status,consent_version,consent_at,created_at,reviewed_at,photo IS NOT NULL AS has_photo FROM submissions WHERE status=? ORDER BY id DESC LIMIT 50 OFFSET ?",
+        "SELECT id,name,initials,quote,property,birthday,status,consent_version,consent_at,created_at,reviewed_at,photo IS NOT NULL AS has_photo FROM submissions WHERE status=? ORDER BY id DESC LIMIT 50 OFFSET ?",
         status,
         page * 50,
       ).all();

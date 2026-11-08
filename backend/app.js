@@ -17,7 +17,17 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const token = () => randomBytes(32).toString("base64url");
-const consentVersion = "2026-11-08-v1";
+const consentVersion = "birthday-v2";
+function validBirthday(value) {
+  if (value == null || value === "") return true;
+  if (
+    typeof value !== "string" ||
+    !/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(value)
+  )
+    return false;
+  const [month, day] = value.split("-").map(Number);
+  return day <= [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+}
 
 export function createApp(config = {}) {
   const production = config.production ?? process.env.NODE_ENV === "production";
@@ -47,6 +57,13 @@ export function createApp(config = {}) {
     );
     CREATE TABLE IF NOT EXISTS sessions (hash TEXT PRIMARY KEY, expires INTEGER NOT NULL, password_version TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS submissions_status ON submissions(status,id);`);
+  if (
+    !db
+      .prepare("PRAGMA table_info(submissions)")
+      .all()
+      .some((column) => column.name === "birthday")
+  )
+    db.exec("ALTER TABLE submissions ADD COLUMN birthday TEXT");
   const salt = randomBytes(16);
   const passwordHash = password ? scryptSync(password, salt, 64) : null;
   const passwordVersion = hash(password);
@@ -97,9 +114,9 @@ export function createApp(config = {}) {
     limits: {
       fileSize: 8 * 1024 * 1024,
       files: 1,
-      fields: 6,
+      fields: 7,
       fieldSize: 2048,
-      parts: 7,
+      parts: 8,
     },
   });
   function session(req) {
@@ -119,14 +136,14 @@ export function createApp(config = {}) {
     next();
   }
   const fields =
-    "id,name,initials,quote,property,status,consent_version,consent_at,created_at,reviewed_at,photo IS NOT NULL AS has_photo";
+    "id,name,initials,quote,property,birthday,status,consent_version,consent_at,created_at,reviewed_at,photo IS NOT NULL AS has_photo";
   const safeId = (req) =>
     /^\d+$/.test(req.params.id) ? Number(req.params.id) : -1;
   app.get("/api/health", (_req, res) => res.json({ ok: true }));
   app.get("/api/profiles", (_req, res) => {
     const rows = db
       .prepare(
-        "SELECT id,name,initials,quote,property,photo IS NOT NULL AS has_photo FROM submissions WHERE status='approved' ORDER BY id",
+        "SELECT id,name,initials,quote,property,birthday,photo IS NOT NULL AS has_photo FROM submissions WHERE status='approved' ORDER BY id",
       )
       .all();
     res.json({
@@ -164,6 +181,12 @@ export function createApp(config = {}) {
           error:
             "Enter a name (2–80 characters), a quote (up to 240), a description (up to 60), and initials of up to 4 characters.",
         });
+      if (!validBirthday(body.birthday))
+        return res
+          .status(400)
+          .json({
+            error: "Enter a valid birthday in MM-DD format, such as 02-29.",
+          });
       if (body.consent !== "true")
         return res
           .status(400)
@@ -210,13 +233,14 @@ export function createApp(config = {}) {
           .join("");
       const result = db
         .prepare(
-          "INSERT INTO submissions(name,initials,quote,property,photo,withdrawal_hash,consent_version,consent_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO submissions(name,initials,quote,property,birthday,photo,withdrawal_hash,consent_version,consent_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
         )
         .run(
           body.name.trim(),
           initials,
           body.quote.trim(),
           body.property.trim(),
+          body.birthday || null,
           photo,
           hash(secret),
           consentVersion,

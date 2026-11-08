@@ -56,6 +56,19 @@
               placeholder="Always curious"
             /><span>A short description. Up to 60 characters.</span></label
           ><label
+            >Birthday <span>(optional)</span
+            ><input
+              name="birthday"
+              type="text"
+              inputmode="numeric"
+              placeholder="MM-DD, e.g. 02-29"
+              pattern="(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])"
+              maxlength="5"
+            /><span
+              >Month and day only; no birth year. If provided, it will be public
+              after approval.</span
+            ></label
+          ><label
             >A photo <span>(optional)</span
             ><input
               id="photoInput"
@@ -81,8 +94,8 @@
                 required
               /><span
                 >I am submitting my own details and agree to publish my name,
-                quote, description, and photo on this public batch archive after
-                admin approval.</span
+                quote, description, and any birthday and photo I provide on this
+                public batch archive after admin approval.</span
               ></label
             >
             <p>

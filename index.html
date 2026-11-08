@@ -1,1 +1,192 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NITC EP — The Batch</title><link rel="stylesheet" href="style.css"><script defer src="students.js"></script><script defer src="app.js"></script></head><body><header><a class="brand" href="#top">EP<span> / </span>37</a><nav aria-label="Choose design"><button id="tableBtn" aria-pressed="true">Periodic table</button><button id="recordBtn" aria-pressed="false">Lab record</button></nav><span class="edition">NIT CALICUT · EP</span></header><main id="top"><section class="hero"><div><p class="eyebrow">AN UNOFFICIAL BATCH ARCHIVE &nbsp; / &nbsp; EST. 20XX</p><h1>Thirty-seven<br><em>ways to be EP.</em></h1><p class="intro">Four years, a hundred stories, and the people who made them matter. This is our little corner of the internet.</p><a href="#people" class="explore">MEET THE BATCH <span>↘</span></a></div><div class="hero-mark" aria-hidden="true"><span>37</span><small>PEOPLE<br>ONE BATCH<br>∞ STORIES</small></div></section><section id="people" class="people"><div class="section-head"><div><p class="eyebrow">THE PEOPLE / 01—37</p><h2 id="sectionTitle">The elements of us<span>.</span></h2></div><p id="sectionDesc">Every element has a story.<br>Select a tile to see theirs.</p></div><div id="grid" class="grid"></div></section><section class="closing"><p class="eyebrow">STILL REACTING, STILL BECOMING</p><h2>Here's to the stories<br><em>we haven't made yet.</em></h2><p>Made by students of the NITC EP batch. An unofficial keepsake, made with love.</p></section></main><footer><span>EP / 37</span><span>THE BATCH ARCHIVE · 20XX</span><a href="#top">BACK TO TOP ↑</a></footer><dialog id="profile"><button class="close" aria-label="Close profile">×</button><div id="profileContent"></div></dialog></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#eef1f5" />
+    <meta
+      name="description"
+      content="A student-made keepsake for the Engineering Physics batch at NIT Calicut. Thirty-seven people, one shared story."
+    />
+    <title>EP / 37 — A batch in good company</title>
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="students.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#people">Skip to the batch</a>
+    <header class="site-header" id="top">
+      <a class="brand" href="#top" aria-label="EP 37 home"
+        >ep<span>/37</span><i aria-hidden="true"></i
+      ></a>
+      <span class="identity">Engineering Physics<br />NIT Calicut</span>
+      <nav aria-label="Main navigation">
+        <a href="#people">The batch</a><a href="#about">The idea</a>
+      </nav>
+      <span class="header-note">A student-made archive</span>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="heroTitle">
+        <div class="hero-copy">
+          <p class="intro-label">
+            <span aria-hidden="true"></span> In good company
+          </p>
+          <h1 id="heroTitle">Different people.<br />Same wavelength.</h1>
+          <p class="intro">
+            Thirty-seven ways of looking at the world.<br />One Engineering
+            Physics batch to remember.
+          </p>
+          <a href="#people" class="primary-link"
+            >Meet the batch <span aria-hidden="true">↗</span></a
+          >
+          <p class="hero-footnote">For the people behind the lab records.</p>
+        </div>
+        <figure class="wave-plate">
+          <div class="plate-top">
+            <span>A study in togetherness</span><span>Fig. 37</span>
+          </div>
+          <svg
+            class="wave-art"
+            viewBox="0 0 500 400"
+            role="img"
+            aria-label="Intersecting blue wave paths forming a shared field"
+          >
+            <defs>
+              <pattern
+                id="graph"
+                width="25"
+                height="25"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M25 0H0V25"
+                  fill="none"
+                  stroke="#234bc0"
+                  stroke-opacity=".1"
+                />
+              </pattern>
+              <clipPath id="waveClip">
+                <rect width="500" height="400" />
+              </clipPath>
+            </defs>
+            <rect width="500" height="400" fill="url(#graph)" />
+            <g
+              id="wavePaths"
+              clip-path="url(#waveClip)"
+              fill="none"
+              stroke="#234bc0"
+              stroke-width="1.15"
+            ></g>
+            <circle cx="250" cy="200" r="57" fill="#234bc0" />
+            <text
+              x="250"
+              y="220"
+              text-anchor="middle"
+              fill="#fff"
+              font-family="Georgia,serif"
+              font-style="italic"
+              font-size="57"
+            >
+              ep
+            </text>
+          </svg>
+          <figcaption>
+            <span>Individual frequencies.<br />A collective resonance.</span
+            ><span class="plate-symbol" aria-hidden="true">≈</span>
+          </figcaption>
+        </figure>
+      </section>
+      <div class="archive-strip">
+        <span>37 people</span><span>One shared chapter</span
+        ><span>Countless stories to come</span>
+      </div>
+      <section id="people" class="people" aria-labelledby="sectionTitle">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Meet the batch</p>
+            <h2 id="sectionTitle">The elements of us.</h2>
+          </div>
+          <p id="sectionDesc">
+            A small table of very different personalities.<br />Open an element.
+            Get to know the person.
+          </p>
+        </div>
+        <div class="toolbar">
+          <div
+            class="view-switch"
+            role="group"
+            aria-label="Choose archive layout"
+          >
+            <button id="tableBtn" aria-pressed="true">
+              <span aria-hidden="true">▦</span> Periodic table</button
+            ><button id="recordBtn" aria-pressed="false">
+              <span aria-hidden="true">☷</span> Lab record
+            </button>
+          </div>
+          <button id="randomBtn" class="text-button">
+            Meet someone at random <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+        <div class="sample-note">
+          <span class="status-dot" aria-hidden="true"></span>
+          <p id="sampleNote">
+            Concept preview: three fictional profiles. The rest of the batch is
+            still to come.
+          </p>
+        </div>
+        <div id="grid" class="grid"></div>
+        <p id="mobileRemainder" class="mobile-remainder"></p>
+        <div class="grid-footer">
+          <span
+            ><i class="legend-dot" aria-hidden="true"></i>
+            <span id="profileCount">3 sample profiles</span></span
+          ><span>Room for everyone's story.</span>
+        </div>
+      </section>
+      <section id="about" class="about" aria-labelledby="aboutTitle">
+        <div>
+          <p class="section-kicker">More than a class list</p>
+          <h2 id="aboutTitle">A little of us.<br />Kept for later.</h2>
+        </div>
+        <div class="about-copy">
+          <p>
+            Someday, the lab reports will be hard to find. The people who helped
+            you finish them shouldn't be.
+          </p>
+          <p>
+            This is a place for a face, a few words, and the things that make
+            each of us unmistakably us. A small keepsake from our time at NIT
+            Calicut.
+          </p>
+          <details>
+            <summary>How does a story become part of the archive?</summary>
+            <p>
+              Each classmate chooses a photo, a short description, and a line
+              they'd like to remember. Profiles are added only with their
+              agreement. These first three entries are fictional examples while
+              we shape the archive together.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <a class="brand" href="#top">ep<span>/37</span></a>
+      <p>
+        Made by students. Kept for the batch.<br /><span
+          >An unofficial NIT Calicut Engineering Physics archive.</span
+        >
+      </p>
+      <a class="back-top" href="#top">Back to top ↑</a>
+    </footer>
+    <dialog id="profile" aria-labelledby="profileName">
+      <button class="close" aria-label="Close profile">×</button>
+      <div id="profileContent"></div>
+      <div class="profile-nav">
+        <button id="prevPerson">← Previous</button
+        ><span id="profilePosition"></span
+        ><button id="nextPerson">Next →</button>
+      </div>
+    </dialog>
+  </body>
+</html>

@@ -947,3 +947,12 @@ blockquote {
     font-size: 11px;
   }
 }
+
+.credit-link {
+  text-decoration: underline;
+  text-decoration-color: #777870;
+  text-underline-offset: 3px;
+}
+.credit-link:hover {
+  color: var(--ink);
+}

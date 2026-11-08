@@ -1,123 +1,101 @@
 # EP / 37 — The batch yearbook
 
-A dark, typography-led yearbook with a shuffleable stack of quotations, a poster
-gallery, a name index, and a working student-submission backend. The original
-quotations are unchanged. Three fictional profiles are included for design previews.
+**Live site:** https://nitc-ep-yearbook.devangagarwal2007.workers.dev
 
-## Two ways to open it
+**Submit a story:** https://nitc-ep-yearbook.devangagarwal2007.workers.dev/submit
 
-**Design preview:** open `index.html` directly in a browser. It shows the fictional
-profiles from `students.js`. Submission and admin actions require the server below.
+**Admin review:** https://nitc-ep-yearbook.devangagarwal2007.workers.dev/admin
 
-**Working website:** install Node.js **24 or later**, then run these commands from
-the extracted project folder:
+Built by **Devang Agarwal, CR of the first sem**. A student-made, unofficial NIT
+Calicut Engineering Physics archive with a quote deck, poster gallery, name index,
+and moderated submissions. Design references are in `DESIGN.md`.
+
+## Student → archive
+
+1. Anyone with the link can submit their name, quote, description, optional photo,
+   and consent. Students do not need accounts or an invitation code.
+2. Submissions remain private until an admin checks and approves them.
+3. Approved profiles appear publicly on the next page load. Rejecting an approved
+   profile removes it from public view immediately.
+4. Students receive a private management link to check status or permanently withdraw
+   their submission. Save it: no email address is collected and no receipt is emailed.
+5. Admins can approve, reject, return to review, or delete. Student edits currently
+   mean withdrawing and submitting a revised profile.
+
+Until the first real profile is approved, the homepage shows three clearly labeled
+fictional examples so visitors can see the design. These are never seeded into the
+student database. Real approved profiles replace all examples automatically.
+
+## Production hosting
+
+Production runs on **Cloudflare Workers + D1** under the owner's Cloudflare account.
+D1 stores both profile records and portrait bytes persistently across deployments.
+There is no Node server to keep awake, local disk to lose on a restart, paid image
+service, or external database. The public `workers.dev` domain includes HTTPS.
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for deployment, credential rotation, backup,
+limits, and long-term upkeep. Source is stored in the private GitHub repository
+https://github.com/Thenewbiehacker/nitc-ep-yearbook on `design/quote-yearbook`.
+Git pushes do not automatically deploy; use the documented deploy commands.
+
+The admin password is a Cloudflare runtime secret. No real password, API token,
+student database, or private backup belongs in Git or the downloadable ZIP.
+
+## Photo processing and privacy
+
+The form accepts JPEG, PNG, or WebP up to 8 MB and 25 megapixels. The browser resizes
+it to at most 1000 × 1200 and encodes a JPEG under 1 MB. The Worker independently
+bounds request size, validates JPEG structure/dimensions, and strips metadata before
+storing it. It does not fully decode compressed pixels; the browser handles decoding
+and admins inspect the photo before publication. The optional Node backend below
+also fully decodes and re-encodes the image using sharp.
+
+Consent version/timestamp and private withdrawal-token hashes are stored privately.
+Only approved profile fields are public. Token links put the secret in the URL
+fragment, not the server-visible path. Anyone with a student's private link can
+withdraw that student's story. The form is not an identity check: admins must confirm
+that submissions belong to classmates before publishing.
+
+Production rate limits are stored in D1: 120 submissions/IP/hour (campus Wi-Fi friendly),
+5 login attempts/IP/15 minutes, and 30 withdrawal attempts/IP/15 minutes. Admin cookies
+are HttpOnly, Secure, SameSite=Strict, and expire after eight hours. Password rotation
+invalidates prior sessions. Writes check their request origin. A 200-submission storage
+cap includes pending, approved, and rejected entries; delete old spam/rejections when
+needed. This keeps storage bounded for a 37-person batch.
+
+## Work locally
+
+Install Node.js **24 or later**, then `npm ci`.
+
+### Design preview
+
+Open `index.html` directly: fictional samples, no server needed. Submission and admin
+pages explain that they need a running backend.
+
+### Cloudflare-equivalent development
 
 ```sh
-npm ci
-cp .env.example .env
+npm run build:cloudflare
+npx wrangler d1 migrations apply nitc-ep-yearbook --local
 ```
 
-On Windows, use `copy .env.example .env` instead. Open `.env` in a text editor and
-set `ADMIN_PASSWORD` to your own unique password of at least 16 characters. Then:
+Copy `.dev.vars.example` to `.dev.vars`, set your own development admin password
+(16–256 characters), and run `npm run dev:cloudflare`. Open the URL Wrangler prints.
+Local D1 data is separate from production. Never use `--remote` for a local test.
+
+### Optional Node + SQLite backend
+
+The original standalone server remains available:
 
 ```sh
+cp .env.example .env
 npm start
 ```
 
-Open:
-
-- **Archive:** http://localhost:3000
-- **Student submission:** http://localhost:3000/submit
-- **Admin review:** http://localhost:3000/admin
-
-The running website starts empty. It shows only approved database profiles; it
-never publishes the fictional preview profiles automatically. No default admin
-password is supplied. In development, leaving the password blank disables admin
-login; production startup requires it.
-
-## How student data reaches the site
-
-1. A student visits **Add your story**. Anyone with the link can submit; there is
-   no invitation code and no student account.
-2. They enter their name, quote (240 characters maximum), description (60 maximum),
-   optional initials, and optional JPEG/PNG/WebP photo (up to 8 MB and 25 megapixels).
-3. They explicitly consent to public publication after review. The server records
-   the consent version and timestamp alongside the submission.
-4. The backend validates the form, converts photos to WebP, removes photo metadata,
-   and stores the submission and image together in SQLite as **pending**.
-5. The student receives a **private management link**, with copy and download
-   controls. This is the only way to check status or withdraw without an admin.
-   No email address is collected, so there is no email receipt or recovery email.
-6. An admin signs in, checks the name/photo/quote and confirms that it belongs to
-   a classmate. **Approve & publish** makes it public. Rejecting an approved entry
-   immediately unpublishes it. Rejected entries remain visible to the admin until
-   deleted; students can withdraw them too.
-7. `/api/profiles` exposes only approved profiles. The gallery, index, and quote
-   stack read that API. Refresh the archive after a moderation change.
-8. The private link can permanently delete a submission, its quote, and photo.
-   The token is stored as a hash, and appears in the link's URL fragment rather
-   than its server-visible path. Anyone possessing that link can withdraw it.
-
-Admin approval is the identity check: the site does not independently verify that
-someone is a classmate. Existing profiles aren't editable through the student
-form; a student can withdraw and resubmit. Admins can approve, reject, return to
-review, or permanently delete, but do not rewrite students' words.
-
-## Backend and storage
-
-- Node.js + Express, with Node's built-in SQLite driver.
-- One database at `data/yearbook.sqlite`, including uploaded image bytes.
-- SQLite WAL files may sit beside it while the server is running.
-- No paid APIs, external database, cloud upload bucket, or email service.
-- Admin sessions expire after eight hours. Cookies are HttpOnly and SameSite=Strict;
-  production cookies require HTTPS. Changing the admin password invalidates previous
-  sessions after restart.
-- Mutations check the request origin. `PUBLIC_ORIGIN` must exactly match the URL
-  visitors use, including scheme and port. No trailing slash.
-- Submission attempts are limited to 120 per IP per hour to accommodate campus Wi-Fi. Login attempts are
-  limited to five per IP per 15 minutes. These in-memory limits reset on restart;
-  this is a single-server application, not a multi-instance deployment.
-- Server source, environment files, database, receipt tokens, and pending photos
-  are not publicly served. Public and private APIs use `Cache-Control: no-store`.
-- `.env`, `data/`, and `node_modules/` are ignored by Git and omitted from the ZIP.
-
-## Hosting this for the batch
-
-This version needs a **Node server with persistent disk**. Static hosting such as
-GitHub Pages alone cannot run its backend. For a single instance:
-
-1. Install Node 24+ on the host, copy the project, and run `npm ci --omit=dev`.
-2. Give the app a persistent writable directory; set `DATA_DIR` to that directory.
-3. Configure `ADMIN_PASSWORD`, `NODE_ENV=production`, and
-   `PUBLIC_ORIGIN=https://your-domain.example` through your host's environment settings.
-4. Start it with `npm start` behind an HTTPS reverse proxy.
-5. Set `TRUST_PROXY=1` only if exactly one trusted proxy stands between the app and
-   visitors. Restrict direct access to the Node port when using that setting.
-6. Keep one app instance. Back up the database and test restoring it before inviting
-   the batch. Keep dependencies patched.
-
-It has not been deployed or connected to a domain. No real student data or production
-credentials are in this package.
-
-## Backups
-
-For a simple consistent backup, stop the server, copy the entire `DATA_DIR` to a
-private location, then restart. Restore with the server stopped as well. Do not copy
-only the main SQLite file from a running server: uncheckpointed changes may be in
-its WAL file. Store backups privately and set a retention period. Withdrawal removes
-live data; old backups and copies downloaded by visitors do not disappear automatically.
-
-## Design and Git history
-
-The design research and references are in `DESIGN.md`. Branches are preserved:
-
-- `main` / tag `original-concept`: the untouched original.
-- `design/editorial-archive`: the blue fieldbook.
-- `design/dark-archive`: the first charcoal revision.
-- `design/quote-yearbook`: the new yearbook and backend.
-
-Commit your changes before switching branches. Older branches are static sites,
-so opening their `index.html` is the way to preview them.
+On Windows, use `copy .env.example .env`. Set `ADMIN_PASSWORD` in `.env` before signing
+in at http://localhost:3000/admin. Data is stored in `data/yearbook.sqlite`; the Node
+server needs a persistent disk if hosted elsewhere. The Node server and Cloudflare
+backend use separate databases. No data synchronization between them is automatic.
 
 ## Checks
 
@@ -125,12 +103,25 @@ so opening their `index.html` is the way to preview them.
 npm test
 npx playwright install chromium
 npm run test:ui
+npm run test:cloudflare
 ```
 
-API tests cover private submissions, consent, origin checks, image validation and
-conversion, login, approval/unpublishing, persistence across restart, withdrawal,
-admin deletion, logout, source-file isolation, and rate limits. Browser tests cover
-the full student → admin → public archive → withdrawal flow, desktop/mobile layouts,
-keyboard navigation, quote shuffling, escaping, and empty states. Tests use temporary
-storage and generated test passwords, then remove their data. Browser tests reserve
-local port 43187. Set `CHROMIUM_PATH` to use an existing compatible Chromium binary.
+These check API privacy, consent, upload processing, approval, rejection, withdrawal,
+authentication, rate limits, and source-file isolation. Browser tests exercise the
+student → admin → published profile → withdrawal flow against both Node and the actual
+Cloudflare workerd/D1 emulator, including PNG-to-JPEG preparation and mobile layouts.
+Tests use temporary storage and generated test passwords. `CHROMIUM_PATH` can point
+to an already installed compatible browser. Node UI tests reserve port 43187.
+
+`tests/live-smoke.mjs` is an **explicit production test**, not part of the automatic
+suite. It creates, briefly publishes, and removes one labeled test profile, and reads
+a password only from the file designated by `ADMIN_PASSWORD_FILE`.
+
+## Git history
+
+- `main` / tag `original-concept`: untouched original.
+- `design/editorial-archive`: blue fieldbook.
+- `design/dark-archive`: first charcoal revision.
+- `design/quote-yearbook`: current design, Node backend, and Cloudflare deployment.
+
+Commit local changes before switching branches. Earlier branches are static sites.

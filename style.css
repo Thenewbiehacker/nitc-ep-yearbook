@@ -938,3 +938,12 @@ blockquote {
 .load-status:empty {
   display: none;
 }
+
+/* Submission is the sole header action; section links are kept in the content. */
+@media (max-width: 1000px) {
+  .header-end {
+    display: block;
+    margin-left: auto;
+    font-size: 11px;
+  }
+}

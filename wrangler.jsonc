@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nitc-ep-yearbook",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-08",
+  "workers_dev": true,
+  "assets": {
+    "directory": "dist/public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nitc-ep-yearbook",
+      "migrations_dir": "migrations",
+      "database_id": "997fab01-2996-449a-b61f-e4088bc854bc",
+    },
+  ],
+  "account_id": "a175ce6f772c0c5cb3ccfa91afb54924",
+}

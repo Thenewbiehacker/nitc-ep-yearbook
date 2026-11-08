@@ -1,0 +1,185 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
+import worker, { sanitizeJpeg } from "../worker/index.js";
+function database() {
+  const db = new DatabaseSync(":memory:");
+  db.exec(
+    readFileSync(
+      new URL("../migrations/0001_initial.sql", import.meta.url),
+      "utf8",
+    ),
+  );
+  return {
+    prepare(sql) {
+      return {
+        bind(...args) {
+          const stmt = db.prepare(sql);
+          const params = args.map((x) =>
+            x instanceof Uint8Array || Array.isArray(x) ? Buffer.from(x) : x,
+          );
+          return {
+            async first() {
+              return stmt.get(...params) || null;
+            },
+            async all() {
+              return { results: stmt.all(...params) };
+            },
+            async run() {
+              const r = stmt.run(...params);
+              return {
+                meta: {
+                  changes: Number(r.changes),
+                  last_row_id: Number(r.lastInsertRowid),
+                },
+              };
+            },
+          };
+        },
+      };
+    },
+  };
+}
+const jpeg = Uint8Array.from([
+  255, 216, 255, 225, 0, 4, 1, 2, 255, 192, 0, 11, 8, 0, 1, 0, 1, 1, 1, 17, 0,
+  255, 218, 0, 8, 1, 1, 0, 0, 63, 0, 0, 255, 217,
+]);
+test("JPEG sanitizer strips metadata and rejects invalid structure", () => {
+  assert.equal(sanitizeJpeg(jpeg).length, jpeg.length - 6);
+  assert.throws(() => sanitizeJpeg(jpeg.slice(0, -2)));
+  const big = jpeg.slice();
+  big[15] = 5;
+  assert.throws(() => sanitizeJpeg(big));
+});
+test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", async () => {
+  const env = {
+    DB: database(),
+    ADMIN_PASSWORD: "a secure password 123",
+    ASSETS: { fetch: async () => new Response("asset") },
+  };
+  const origin = "https://example.test";
+  const call = (path, options = {}) =>
+    worker.fetch(
+      new Request(origin + path, {
+        ...options,
+        headers: {
+          ...(options.method && options.method !== "GET"
+            ? { Origin: origin }
+            : {}),
+          ...options.headers,
+        },
+      }),
+      env,
+    );
+  assert.equal((await call("/backend/app.js")).status, 404);
+  assert.equal(
+    (
+      await call("/api/admin/login", {
+        method: "POST",
+        headers: { Origin: "https://evil.test" },
+        body: "{}",
+      })
+    ).status,
+    403,
+  );
+  const form = new FormData();
+  for (const [k, v] of Object.entries({
+    name: "Alice Example",
+    quote: "Hello",
+    property: "Kind",
+    consent: "true",
+  }))
+    form.set(k, v);
+  form.set("photo", new File([jpeg], "x.jpg", { type: "image/jpeg" }));
+  const submitted = await call("/api/submissions", {
+    method: "POST",
+    body: form,
+  });
+  assert.equal(submitted.status, 201);
+  const { id, withdrawalToken } = await submitted.json();
+  assert.deepEqual((await (await call("/api/profiles")).json()).profiles, []);
+  assert.equal((await call(`/api/photos/${id}`)).status, 404);
+  assert.equal((await call("/api/admin/submissions")).status, 401);
+  const login = await call("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: env.ADMIN_PASSWORD }),
+  });
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get("set-cookie");
+  assert.match(cookie, /HttpOnly; Secure; SameSite=Strict/);
+  const auth = { Cookie: cookie.split(";")[0] };
+  assert.equal(
+    (await call(`/api/admin/photos/${id}`, { headers: auth })).status,
+    200,
+  );
+  assert.equal(
+    (
+      await call(`/api/admin/submissions/${id}`, {
+        method: "PATCH",
+        headers: { ...auth, "Content-Type": "application/json" },
+        body: '{"status":"approved"}',
+      })
+    ).status,
+    200,
+  );
+  assert.equal((await (await call("/api/profiles")).json()).profiles.length, 1);
+  assert.equal(
+    (await call(`/api/photos/${id}`)).headers.get("content-type"),
+    "image/jpeg",
+  );
+  assert.equal(
+    (
+      await call(`/api/submissions/${id}/status`, {
+        headers: { "x-withdrawal-token": withdrawalToken },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await call(`/api/submissions/${id}`, {
+        method: "DELETE",
+        headers: { "x-withdrawal-token": withdrawalToken },
+      })
+    ).status,
+    200,
+  );
+  assert.equal((await call(`/api/photos/${id}`)).status, 404);
+  env.ADMIN_PASSWORD = "a different password 456";
+  assert.equal(
+    (await call("/api/admin/session", { headers: auth })).status,
+    401,
+  );
+  env.ADMIN_PASSWORD = "a secure password 123";
+  assert.equal(
+    (await call("/api/admin/session", { headers: auth })).status,
+    200,
+  );
+  for (let i = 0; i < 4; i++)
+    assert.equal(
+      (
+        await call("/api/admin/login", {
+          method: "POST",
+          body: '{"password":"wrong"}',
+        })
+      ).status,
+      401,
+    );
+  assert.equal(
+    (
+      await call("/api/admin/login", {
+        method: "POST",
+        body: '{"password":"wrong"}',
+      })
+    ).status,
+    429,
+  );
+  for (let i = 0; i < 29; i++)
+    await call("/api/submissions/999", { method: "DELETE" });
+  assert.equal(
+    (await call("/api/submissions/999", { method: "DELETE" })).status,
+    429,
+  );
+});

@@ -10,6 +10,44 @@ async function api(url, options = {}) {
   if (!response.ok) throw new Error(result.error || "The request failed.");
   return result;
 }
+// Normalize locally so Cloudflare can store small, metadata-free portraits without a paid image service.
+async function preparePortrait(file) {
+  if (file.size > 8 * 1024 * 1024)
+    throw new Error("Choose a photo smaller than 8 MB.");
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
+    throw new Error("Choose a JPEG, PNG, or WebP photo.");
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error(
+      "This photo could not be read. Try a different JPEG, PNG, or WebP.",
+    );
+  }
+  try {
+    if (bitmap.width * bitmap.height > 25000000)
+      throw new Error("Choose a photo under 25 megapixels.");
+    const scale = Math.min(1, 1000 / bitmap.width, 1200 / bitmap.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.84, 0.7, 0.55]) {
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", quality),
+      );
+      if (blob && blob.size <= 1024 * 1024) return blob;
+    }
+    throw new Error(
+      "This photo could not be made small enough. Please choose a simpler or smaller portrait.",
+    );
+  } finally {
+    bitmap.close();
+  }
+}
 if (isOffline) {
   status(
     "This form needs the backend. Run npm install and npm start, then open http://localhost:3000. The downloaded index.html is a design preview only.",
@@ -53,9 +91,16 @@ if (form) {
     submit.disabled = true;
     status("Sending your story for review…");
     try {
+      const payload = new FormData(form);
+      const photo = payload.get("photo");
+      if (photo && photo.size) {
+        status("Preparing your portrait…");
+        payload.set("photo", await preparePortrait(photo), "portrait.jpg");
+      } else payload.delete("photo");
+      status("Sending your story for review…");
       const result = await api("/api/submissions", {
         method: "POST",
-        body: new FormData(form),
+        body: payload,
       });
       const privateURL = new URL("/withdraw", location.origin);
       privateURL.hash = new URLSearchParams({

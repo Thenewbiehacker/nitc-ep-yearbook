@@ -172,6 +172,7 @@ document.querySelector("#shuffleBtn").addEventListener("click", () => {
 
 // Local file previews use fictional samples; the running server uses only approved profiles.
 if (location.protocol === "http:" || location.protocol === "https:") {
+  const previewProfiles = students.map((person) => ({ ...person }));
   students.splice(0);
   render();
   const notice = document.querySelector("#loadStatus");
@@ -181,7 +182,11 @@ if (location.protocol === "http:" || location.protocol === "https:") {
       if (!response.ok) throw new Error("Archive unavailable");
       const data = await response.json();
       if (!Array.isArray(data.profiles)) throw new Error("Invalid archive");
-      students.splice(0, students.length, ...data.profiles);
+      students.splice(
+        0,
+        students.length,
+        ...(data.profiles.length ? data.profiles : previewProfiles),
+      );
       render();
       notice.textContent = "";
     })

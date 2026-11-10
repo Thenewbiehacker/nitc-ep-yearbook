@@ -97,17 +97,23 @@ function showPerson(index) {
   if (!students.length) return;
   activeIndex = (index + students.length) % students.length;
   const person = students[activeIndex];
+  document.querySelector("#profileStory").textContent = `Story ${String(activeIndex + 1).padStart(2, "0")}`;
   content.innerHTML = `
     <div class="portrait"><span aria-hidden="true">${esc(person.initials || "?")}</span>
       ${person.photo ? `<img src="${esc(person.photo)}" alt="Portrait of ${esc(person.name)}">` : ""}
-      <small class="portrait-label">${person.photo ? "" : "A portrait will go here"}</small>
+      <small class="portrait-label">${person.photo ? "Engineering Physics · NIT Calicut" : "A portrait will go here"}</small>
     </div>
-    <div class="profile-copy"><p class="section-kicker">Story ${String(activeIndex + 1).padStart(2, "0")}</p>
+    <div class="profile-copy">
+      <p class="profile-eyebrow">One of our own</p>
       <h2 id="profileName">${esc(person.name || "Name to come")}</h2>
       <p class="property">${esc(person.property || "A story in the making")}</p>
-      ${person.birthday ? `<p class="birthday">Birthday · ${esc(formatBirthday(person.birthday))}</p>` : ""}
-      <blockquote>“${esc(person.quote || "Their story is coming soon.")}”</blockquote>
-      <p class="caption">Engineering Physics, NIT Calicut<br>${person.example ? "Fictional profile · Concept preview" : "The batch archive"}</p>
+      <div class="profile-quote"><span class="profile-quote-mark" aria-hidden="true">“</span>
+        <blockquote>${esc(person.quote || "Their story is coming soon.")}</blockquote>
+      </div>
+      <div class="profile-details">
+        ${person.birthday ? `<p class="birthday"><span>Birthday · </span>${esc(formatBirthday(person.birthday))}</p>` : ""}
+        <p class="caption"><span>Same wavelength</span>${person.example ? "Fictional profile · Concept preview" : "The batch archive"}</p>
+      </div>
     </div>`;
   const photo = content.querySelector("img");
   if (photo)

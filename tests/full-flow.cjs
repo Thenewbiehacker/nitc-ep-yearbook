@@ -86,12 +86,16 @@ const { randomBytes } = require("node:crypto");
     })
       .png()
       .toBuffer();
+    assert.equal(await page.locator("#photoInput").evaluate((input) => input.required && input.validity.valueMissing), true);
     await page.locator("#photoInput").setInputFiles({
       name: "test-portrait.png",
       mimeType: "image/png",
       buffer: portrait,
     });
-    await page.locator("[name=birthday]").fill("02-29");
+    const birthdayInput = page.locator("[name=birthday]");
+    assert.equal(await birthdayInput.evaluate((input) => input.required), true);
+    assert.equal(await birthdayInput.evaluate((input) => input.validity.valueMissing), true);
+    await birthdayInput.fill("02-29");
     await page.locator("[name=consent]").check();
     await page.getByRole("button", { name: "Send for review" }).click();
     await page.locator("#submissionSuccess").waitFor({ state: "visible" });

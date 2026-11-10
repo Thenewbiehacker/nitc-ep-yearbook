@@ -29,13 +29,15 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
     },
     body: JSON.stringify(body),
   });
-  const form = (changes = {}, photo) => {
+  const defaultPhoto = await sharp({ create: { width: 10, height: 10, channels: 3, background: "#aabbcc" } }).jpeg().toBuffer();
+  const form = (changes = {}, photo = defaultPhoto) => {
     const data = new FormData();
     for (const [key, value] of Object.entries({
       name: "Test Student",
       initials: "Ts",
       quote: "<script>not executable</script>",
       property: "Always curious",
+      birthday: "02-29",
       consent: "true",
       ...changes,
     }))
@@ -101,6 +103,23 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
         );
       },
     );
+    await t.test("photo is required", async () => {
+      for (const photo of [null, Buffer.alloc(0)]) {
+        const response = await request("/api/submissions", { method: "POST", body: form({}, photo) });
+        assert.equal(response.status, 400);
+        assert.match((await response.json()).error, /photo/i);
+      }
+    });
+    await t.test("birthday is required and must be a real month and day", async () => {
+      for (const birthday of [undefined, "", " ", "02-30", "04-31"]) {
+        const body = form();
+        if (birthday === undefined) body.delete("birthday");
+        else body.set("birthday", birthday);
+        const response = await request("/api/submissions", { method: "POST", body });
+        assert.equal(response.status, 400);
+        assert.match((await response.json()).error, /birthday/i);
+      }
+    });
     await t.test(
       "valid submission remains private and photo is transformed",
       async () => {

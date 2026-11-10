@@ -19,7 +19,6 @@ const hash = (value) => createHash("sha256").update(value).digest("hex");
 const token = () => randomBytes(32).toString("base64url");
 const consentVersion = "birthday-v2";
 function validBirthday(value) {
-  if (value == null || value === "") return true;
   if (
     typeof value !== "string" ||
     !/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(value)
@@ -185,12 +184,14 @@ export function createApp(config = {}) {
         return res
           .status(400)
           .json({
-            error: "Enter a valid birthday in MM-DD format, such as 02-29.",
+            error: "Birthday is required. Enter a valid date in MM-DD format, such as 02-29.",
           });
       if (body.consent !== "true")
         return res
           .status(400)
           .json({ error: "Your permission to publish is required." });
+      if (!req.file || !req.file.size)
+        return res.status(400).json({ error: "A photo is required." });
       let photo = null;
       if (req.file) {
         try {

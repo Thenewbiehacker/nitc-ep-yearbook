@@ -40,6 +40,7 @@ try {
     initials: "QA",
     quote: "Temporary verification profile. Removed automatically.",
     property: "Deployment verification",
+    birthday: "02-29",
     consent: "true",
   }))
     form.append(key, value);

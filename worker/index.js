@@ -1,5 +1,4 @@
 function validBirthday(value) {
-  if (value == null || value === "") return true;
   if (
     typeof value !== "string" ||
     !/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(value)
@@ -286,11 +285,13 @@ async function handle(req, env) {
         "Enter a name (2–80 characters), a quote (up to 240), a description (up to 60), and initials of up to 4 characters.",
       );
     if (!validBirthday(form.get("birthday")))
-      return error("Enter a valid birthday in MM-DD format, such as 02-29.");
+      return error("Birthday is required. Enter a valid date in MM-DD format, such as 02-29.");
     if (form.get("consent") !== "true")
       return error("Your permission to publish is required.");
     let photo = null;
     const file = form.get("photo");
+    if (!file || (typeof file !== "string" && !file.size))
+      return error("A photo is required.");
     if (file && typeof file !== "string" && file.size) {
       try {
         photo = sanitizeJpeg(await file.arrayBuffer());

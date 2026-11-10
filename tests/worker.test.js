@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import sharp from "sharp";
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
 import worker, { sanitizeJpeg } from "../worker/index.js";
@@ -98,6 +99,13 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
     consent: "true",
   }))
     form.set(k, v);
+  for (const photo of [null, new File([], "empty.jpg", { type: "image/jpeg" })]) {
+    if (photo) form.set("photo", photo);
+    else form.delete("photo");
+    const response = await call("/api/submissions", { method: "POST", body: form });
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /photo/i);
+  }
   form.set("photo", new File([jpeg], "x.jpg", { type: "image/jpeg" }));
   const submitted = await call("/api/submissions", {
     method: "POST",
@@ -193,7 +201,7 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
   );
 });
 
-test("birthdays reject invalid dates and accept missing values", async () => {
+test("birthdays require a valid month and day", async () => {
   const env = {
     DB: database(),
     ADMIN_PASSWORD: "a secure password 123",
@@ -203,7 +211,9 @@ test("birthdays reject invalid dates and accept missing values", async () => {
     ["02-30", 400],
     ["04-31", 400],
     ["02-29", 201],
-    ["", 201],
+    ["", 400],
+    [" ", 400],
+    [undefined, 400],
   ]) {
     const form = new FormData();
     for (const [key, value] of Object.entries({
@@ -214,6 +224,9 @@ test("birthdays reject invalid dates and accept missing values", async () => {
       birthday,
     }))
       form.set(key, value);
+    if (birthday === undefined) form.delete("birthday");
+    const jpeg = await sharp({ create: { width: 10, height: 10, channels: 3, background: "#aabbcc" } }).jpeg().toBuffer();
+    form.set("photo", new File([jpeg], "test.jpg", { type: "image/jpeg" }));
     const response = await worker.fetch(
       new Request("https://example.test/api/submissions", {
         method: "POST",

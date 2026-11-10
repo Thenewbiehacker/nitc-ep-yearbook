@@ -1,15 +1,4 @@
-function validBirthday(value) {
-  if (
-    typeof value !== "string" ||
-    !/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$/.test(value)
-  )
-    return false;
-  const [day, month, year] = value.split("-").map(Number);
-  const date = new Date(`${value.slice(6)}-${value.slice(3, 5)}-${value.slice(0, 2)}T00:00:00Z`);
-  return year > 0 && date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 && date.getUTCDate() === day &&
-    date <= new Date();
-}
+import { validBirthday, validateProfileEdit } from "../backend/profile-details.js";
 const encoder = new TextEncoder();
 const hash = async (value) =>
   Array.from(
@@ -454,6 +443,22 @@ async function handle(req, env) {
             },
           })
         : new Response(null, { status: 404 });
+    }
+    m = path.match(/^\/api\/admin\/submissions\/(\d+)\/details$/);
+    if (method === "PATCH" && m) {
+      const current = await query(db,
+        "SELECT name,initials,quote,property,birthday FROM submissions WHERE id=?",
+        id(m[1]),
+      ).first();
+      if (!current) return error("Submission not found.", 404);
+      const { details, error: message } = validateProfileEdit(current, await readJson());
+      if (message) return error(message);
+      const result = await query(db,
+        "UPDATE submissions SET name=?,initials=?,quote=?,property=?,birthday=? WHERE id=?",
+        details.name, details.initials, details.quote, details.property,
+        details.birthday, id(m[1]),
+      ).run();
+      return result.meta.changes ? json({ ok: true }) : error("Submission not found.", 404);
     }
     m = path.match(/^\/api\/admin\/submissions\/(\d+)$/);
     if (m && ["PATCH", "DELETE"].includes(method)) {

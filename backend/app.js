@@ -1,4 +1,5 @@
 import express from "express";
+import { validBirthday, validateProfileEdit } from "./profile-details.js";
 import helmet from "helmet";
 import multer from "multer";
 import sharp from "sharp";
@@ -18,18 +19,6 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const token = () => randomBytes(32).toString("base64url");
 const consentVersion = "birthday-full-date-v3";
-function validBirthday(value) {
-  if (
-    typeof value !== "string" ||
-    !/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$/.test(value)
-  )
-    return false;
-  const [day, month, year] = value.split("-").map(Number);
-  const date = new Date(`${value.slice(6)}-${value.slice(3, 5)}-${value.slice(0, 2)}T00:00:00Z`);
-  return year > 0 && date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 && date.getUTCDate() === day &&
-    date <= new Date();
-}
 
 export function createApp(config = {}) {
   const production = config.production ?? process.env.NODE_ENV === "production";
@@ -356,6 +345,20 @@ export function createApp(config = {}) {
       .get(safeId(req));
     if (!row?.photo) return res.sendStatus(404);
     res.type("webp").send(Buffer.from(row.photo));
+  });
+  app.patch("/api/admin/submissions/:id/details", admin, (req, res) => {
+    const current = db.prepare(
+      "SELECT name,initials,quote,property,birthday FROM submissions WHERE id=?",
+    ).get(safeId(req));
+    if (!current) return res.status(404).json({ error: "Submission not found." });
+    const { details, error } = validateProfileEdit(current, req.body);
+    if (error) return res.status(400).json({ error });
+    const result = db.prepare(
+      "UPDATE submissions SET name=?,initials=?,quote=?,property=?,birthday=? WHERE id=?",
+    ).run(details.name, details.initials, details.quote, details.property,
+      details.birthday, safeId(req));
+    if (!result.changes) return res.status(404).json({ error: "Submission not found." });
+    res.json({ ok: true });
   });
   app.patch("/api/admin/submissions/:id", admin, (req, res) => {
     const status = req.body?.status;

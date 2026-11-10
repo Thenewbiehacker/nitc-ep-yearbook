@@ -1,4 +1,5 @@
 import test from "node:test";
+import { checkAdminEdits } from "./admin-edit-checks.js";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
@@ -244,6 +245,11 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
         );
       },
     );
+    await t.test("admin edits details in every review state while preserving the photo and private link", async () => {
+      await checkAdminEdits(request, submission.id, { Cookie: cookie }, birthday => {
+        service.db.prepare("UPDATE submissions SET birthday=? WHERE id=?").run(birthday, submission.id);
+      });
+    });
     await t.test("approved profiles survive a restart", async () => {
       await new Promise((resolve) => server.close(resolve));
       service.close();
@@ -300,6 +306,8 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
         const submitted = await (
           await request("/api/submissions", { method: "POST", body: form() })
         ).json();
+        assert.equal((await request(`/api/admin/submissions/${submitted.id}`,
+          json("PATCH", { status: "approved" }))).status, 200);
         assert.equal(
           (
             await request(`/api/admin/submissions/${submitted.id}`, {
@@ -309,6 +317,9 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
           ).status,
           200,
         );
+        assert.equal((await request(`/api/photos/${submitted.id}`)).status, 404);
+        assert.equal((await request(`/api/admin/photos/${submitted.id}`, { headers: { Cookie: cookie } })).status, 404);
+        assert.equal((await request(`/api/admin/submissions/${submitted.id}`, { method: "DELETE", headers: { Cookie: cookie } })).status, 404);
         assert.equal(
           (
             await request("/api/admin/logout", {

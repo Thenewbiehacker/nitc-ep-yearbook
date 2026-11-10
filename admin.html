@@ -49,6 +49,7 @@
           Check that each submission belongs to a classmate and that the photo
           and text are appropriate before publishing. Approval makes all
           submitted profile details public.
+          Choose Published above to edit or delete an already approved profile.
         </p>
         <div id="reviewList"></div>
         <div class="action-row pagination">
@@ -58,5 +59,24 @@
         </div>
       </section>
     </main>
+    <dialog id="editDialog" class="edit-dialog" aria-labelledby="editTitle">
+      <h2 id="editTitle">Edit profile details</h2>
+      <p class="small-note">The photo stays the same. Changes to a published profile appear in the archive immediately.</p>
+      <form id="editForm">
+        <label>Name<input name="name" required minlength="2" maxlength="80" /></label>
+        <label>Initials<input name="initials" maxlength="4" /><span>Leave blank to generate initials from the name.</span></label>
+        <label>Quote<textarea name="quote" required maxlength="240" rows="3"></textarea></label>
+        <label>Description<input name="property" required maxlength="60" /></label>
+        <label>Birthday<input name="birthday" inputmode="numeric" maxlength="10"
+          placeholder="DD-MM-YYYY, e.g. 29-02-2004"
+          pattern="(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}" />
+          <span id="editBirthdayNote"></span></label>
+        <p id="editStatus" class="status" role="status" aria-live="polite"></p>
+        <div class="action-row">
+          <button class="solid-button" type="submit">Save changes</button>
+          <button id="cancelEdit" class="outline-button" type="button">Cancel</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

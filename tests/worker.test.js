@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { checkAdminEdits } from "./admin-edit-checks.js";
 import assert from "node:assert/strict";
 import sharp from "sharp";
 import { DatabaseSync } from "node:sqlite";
@@ -146,6 +147,21 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
     (await call(`/api/photos/${id}`)).headers.get("content-type"),
     "image/jpeg",
   );
+  await checkAdminEdits(call, id, auth, birthday =>
+    env.DB.prepare("UPDATE submissions SET birthday=? WHERE id=?").bind(birthday, id).run());
+  const another = await (await call("/api/submissions", { method: "POST", body: form })).json();
+  assert.equal((await call(`/api/admin/submissions/${another.id}`, {
+    method: "PATCH", headers: { ...auth, "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "approved" }),
+  })).status, 200);
+  assert.equal((await call(`/api/admin/submissions/${another.id}`, {
+    method: "DELETE", headers: auth,
+  })).status, 200);
+  assert.equal((await call(`/api/photos/${another.id}`)).status, 404);
+  assert.equal((await call(`/api/admin/photos/${another.id}`, { headers: auth })).status, 404);
+  assert.equal((await call(`/api/admin/submissions/${another.id}`, {
+    method: "DELETE", headers: auth,
+  })).status, 404);
   assert.equal(
     (
       await call(`/api/submissions/${id}/status`, {

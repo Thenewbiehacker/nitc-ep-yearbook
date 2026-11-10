@@ -257,6 +257,24 @@ input::file-selector-button {
   justify-content: space-between;
   font-size: 12px;
 }
+.edit-dialog {
+  width: min(620px, calc(100vw - 32px));
+  padding: 25px;
+  background: #181817;
+  color: var(--ink);
+  color-scheme: dark;
+}
+.edit-dialog h2 {
+  font-size: 30px;
+  font-weight: 400;
+  margin: 0 0 15px;
+}
+.edit-dialog > p {
+  margin-bottom: 25px;
+}
+.edit-dialog .action-row {
+  margin: 0;
+}
 nav button {
   border: 0;
   background: none;

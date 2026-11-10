@@ -21,8 +21,12 @@ and moderated submissions. Design references are in `DESIGN.md`.
    profile removes it from public view immediately.
 4. Students receive a private management link to check status or permanently withdraw
    their submission. Save it: no email address is collected and no receipt is emailed.
-5. Admins can approve, reject, return to review, or delete. Student edits currently
-   mean withdrawing and submitting a revised profile.
+5. Admins can approve, reject, return to review, edit details, or permanently delete
+   entries in any review state. Choose **Published** in the admin portal to edit
+   or delete an already approved profile. Editing keeps the same photo, approval
+   status, consent record, and student withdrawal link. Changes to approved profiles
+   appear publicly on the next page load; pending and rejected entries remain private.
+   Old birthdays can be kept unchanged without supplying a missing birth year.
 
 Until the first real profile is approved, the homepage shows three clearly labeled
 fictional examples so visitors can see the design. These are never seeded into the

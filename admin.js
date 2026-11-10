@@ -3,6 +3,12 @@ const loginPanel = document.querySelector("#loginPanel");
 const reviewPanel = document.querySelector("#reviewPanel");
 const filter = document.querySelector("#statusFilter");
 const list = document.querySelector("#reviewList");
+const editDialog = document.querySelector("#editDialog");
+const editForm = document.querySelector("#editForm");
+const editStatus = document.querySelector("#editStatus");
+const submissions = new Map();
+let editingId = null;
+let saving = false;
 let page = 0;
 const esc = (value) =>
   String(value ?? "").replace(
@@ -26,7 +32,13 @@ function signedIn(value) {
   loginPanel.hidden = value;
   reviewPanel.hidden = !value;
   document.querySelector("#logout").hidden = !value;
-  if (!value) list.replaceChildren();
+  if (!value) {
+    list.replaceChildren();
+    submissions.clear();
+    editDialog.close();
+    editForm.reset();
+    editingId = null;
+  }
 }
 async function api(url, options = {}) {
   const response = await fetch(url, {
@@ -46,11 +58,17 @@ async function load() {
     const result = await api(
       `/api/admin/submissions?status=${filter.value}&page=${page}`,
     );
+    if (!result.submissions.length && page > 0) {
+      page = Math.max(0, Math.ceil(result.total / 50) - 1);
+      return load();
+    }
     list.replaceChildren();
+    submissions.clear();
     for (const person of result.submissions) {
+      submissions.set(String(person.id), person);
       const card = document.createElement("article");
       card.className = "review-card";
-      card.innerHTML = `<div>${person.has_photo ? `<img class="review-photo" src="/api/admin/photos/${person.id}" alt="Submitted portrait of ${esc(person.name)}">` : `<span class="review-photo" aria-hidden="true">${esc(person.initials)}</span>`}</div><div><p class="review-meta">Submission ${person.id} · ${esc(person.status)}</p><h2>${esc(person.name)}</h2><p>${esc(person.property)}</p>${person.birthday ? `<p>Birthday: ${esc(formatBirthday(person.birthday))}</p>` : ""}<blockquote>“${esc(person.quote)}”</blockquote><p class="review-meta">Consent recorded ${esc(new Date(person.consent_at).toLocaleString())}<br>Consent version: ${esc(person.consent_version)}</p><div class="action-row">${person.status !== "approved" ? `<button class="solid-button" data-action="approved" data-id="${person.id}">Approve & publish</button>` : ""}${person.status !== "rejected" ? `<button class="outline-button" data-action="rejected" data-id="${person.id}">${person.status === "approved" ? "Unpublish & reject" : "Reject"}</button>` : ""}${person.status === "rejected" ? `<button class="outline-button" data-action="pending" data-id="${person.id}">Return to review</button>` : ""}<button class="outline-button danger" data-action="delete" data-id="${person.id}">Delete permanently</button></div></div>`;
+      card.innerHTML = `<div>${person.has_photo ? `<img class="review-photo" src="/api/admin/photos/${person.id}" alt="Submitted portrait of ${esc(person.name)}">` : `<span class="review-photo" aria-hidden="true">${esc(person.initials)}</span>`}</div><div><p class="review-meta">Submission ${person.id} · ${esc(person.status)}</p><h2>${esc(person.name)}</h2><p>${esc(person.property)}</p>${person.birthday ? `<p>Birthday: ${esc(formatBirthday(person.birthday))}</p>` : ""}<blockquote>“${esc(person.quote)}”</blockquote><p class="review-meta">Consent recorded ${esc(new Date(person.consent_at).toLocaleString())}<br>Consent version: ${esc(person.consent_version)}</p><div class="action-row"><button class="outline-button" data-action="edit" data-id="${person.id}">Edit details</button>${person.status !== "approved" ? `<button class="solid-button" data-action="approved" data-id="${person.id}">Approve & publish</button>` : ""}${person.status !== "rejected" ? `<button class="outline-button" data-action="rejected" data-id="${person.id}">${person.status === "approved" ? "Unpublish & reject" : "Reject"}</button>` : ""}${person.status === "rejected" ? `<button class="outline-button" data-action="pending" data-id="${person.id}">Return to review</button>` : ""}<button class="outline-button danger" data-action="delete" data-id="${person.id}">Delete permanently</button></div></div>`;
       list.append(card);
     }
     if (!result.submissions.length) {
@@ -65,8 +83,10 @@ async function load() {
     document.querySelector("#nextPage").disabled =
       (page + 1) * 50 >= result.total;
     status("");
+    return true;
   } catch (error) {
     status(error.message, true);
+    return false;
   }
 }
 document
@@ -116,10 +136,27 @@ list.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
   const { id, action } = button.dataset;
+  const person = submissions.get(id);
+  if (action === "edit") {
+    editingId = id;
+    editForm.reset();
+    editStatus.textContent = "";
+    for (const name of ["name", "initials", "quote", "property"])
+      editForm.elements.namedItem(name).value = person[name];
+    const birthday = editForm.elements.namedItem("birthday");
+    const fullDate = /^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(person.birthday || "");
+    birthday.value = fullDate ? person.birthday : "";
+    birthday.required = fullDate;
+    document.querySelector("#editBirthdayNote").textContent = fullDate
+      ? "Use DD-MM-YYYY."
+      : `Current birthday: ${person.birthday ? formatBirthday(person.birthday) : "not provided"}. Leave blank to keep it, or enter DD-MM-YYYY.`;
+    editDialog.showModal();
+    return;
+  }
   if (
     action === "delete" &&
     !confirm(
-      "Permanently delete this submission and its photo? This cannot be undone.",
+      `Permanently delete ${person.name}’s entry and photo, including from the public archive? This cannot be undone.`,
     )
   )
     return;
@@ -131,10 +168,45 @@ list.addEventListener("click", async (event) => {
         ? { method: "DELETE" }
         : { method: "PATCH", body: JSON.stringify({ status: action }) },
     );
-    await load();
+    if (await load()) status(action === "delete" ? "Entry deleted." : "Review status updated.");
   } catch (error) {
     status(error.message, true);
     button.disabled = false;
+  }
+});
+document.querySelector("#cancelEdit").addEventListener("click", () => editDialog.close());
+editDialog.addEventListener("cancel", (event) => {
+  if (saving) event.preventDefault();
+});
+editForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (saving || !editForm.reportValidity()) return;
+  const id = editingId;
+  const details = Object.fromEntries(new FormData(editForm));
+  // An empty birthday field on an older entry keeps the original month/day.
+  if (!editForm.elements.namedItem("birthday").required && !details.birthday.trim())
+    delete details.birthday;
+  saving = true;
+  editForm.querySelectorAll("input,textarea,button").forEach(control => control.disabled = true);
+  editStatus.classList.remove("error");
+  editStatus.textContent = "Saving changes…";
+  try {
+    await api(`/api/admin/submissions/${id}/details`, {
+      method: "PATCH",
+      body: JSON.stringify(details),
+    });
+    editDialog.close();
+    if (await load()) {
+      status("Profile details saved.");
+      list.querySelector(`[data-action="edit"][data-id="${id}"]`)?.focus();
+    }
+  } catch (error) {
+    editStatus.textContent = error.message;
+    editStatus.classList.add("error");
+    if (!editDialog.open) status(error.message, true);
+  } finally {
+    saving = false;
+    editForm.querySelectorAll("input,textarea,button").forEach(control => control.disabled = false);
   }
 });
 if (location.protocol === "file:") {

@@ -79,8 +79,17 @@
         </div>
         <div class="collection-meta">
           <p id="sampleNote"></p>
-          <button id="randomBtn">Meet someone at random ↗</button>
+          <div class="collection-actions">
+            <label class="sort-control">Sort by
+              <select id="profileSort">
+                <option value="archive">Archive order</option>
+                <option value="birthday">Upcoming birthdays</option>
+              </select>
+            </label>
+            <button id="randomBtn">Meet someone at random ↗</button>
+          </div>
         </div>
+        <p id="birthdaySummary" class="birthday-summary" role="status" hidden></p>
         <div id="grid" class="grid"></div>
         <p id="loadStatus" class="load-status" role="status"></p>
         <a class="contribute-link" href="submit.html"

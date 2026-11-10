@@ -32,6 +32,13 @@ Until the first real profile is approved, the homepage shows three clearly label
 fictional examples so visitors can see the design. These are never seeded into the
 student database. Real approved profiles replace all examples automatically.
 
+Use **Sort by → Upcoming birthdays** in the batch archive to see today's birthdays
+first, followed by the nearest upcoming dates. This works in both the poster gallery
+and name index, with dates and days-away labels. It uses India time, ignores birth
+year for the annual order, includes older month/day-only birthdays, and puts missing
+birthdays last. February 29 is observed on March 1 in non-leap years. Archive order
+and story numbers are preserved; selecting Archive order restores the original list.
+
 ## Production hosting
 
 Production runs on **Cloudflare Workers + D1** under the owner's Cloudflare account.

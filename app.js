@@ -4,6 +4,9 @@ const content = document.querySelector("#profileContent");
 const batchSize = 37;
 let mode = "table";
 let activeIndex = 0;
+let sortOrder = "archive";
+let displayedIndices = [];
+let renderedBirthdayDay = null;
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -47,6 +50,49 @@ function formatBirthday(value) {
   return `${day}-${month} (year not provided)`;
 }
 
+// Compare calendar dates in India; UTC arithmetic avoids daylight-saving offsets.
+function birthdayToday(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(now);
+  const value = type => Number(parts.find(part => part.type === type).value);
+  return Date.UTC(value("year"), value("month") - 1, value("day"));
+}
+
+function nextBirthday(value, today = birthdayToday()) {
+  if (typeof value !== "string") return null;
+  let day, month, year = 2000;
+  if (/^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(value)) {
+    [day, month, year] = value.split("-").map(Number);
+  } else if (/^[0-9]{2}-[0-9]{2}$/.test(value)) {
+    [month, day] = value.split("-").map(Number);
+  } else return null;
+  const check = new Date(0);
+  check.setUTCFullYear(year, month - 1, day);
+  if (year < 1 || check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
+  const thisYear = new Date(today).getUTCFullYear();
+  // February 29 rolls to March 1 in a non-leap year.
+  let next = Date.UTC(thisYear, month - 1, day);
+  if (next < today) next = Date.UTC(thisYear + 1, month - 1, day);
+  return {
+    day, month, days: Math.round((next - today) / 86400000),
+    date: `${String(day).padStart(2, "0")}-${String(month).padStart(2, "0")}`,
+  };
+}
+
+function birthdayTiming(birthday) {
+  if (!birthday) return "Birthday not provided";
+  const when = birthday.days === 0 ? "Today!" : birthday.days === 1 ? "Tomorrow" : `In ${birthday.days} days`;
+  return `${birthday.date} · ${when}`;
+}
+
+function stepPerson(direction) {
+  if (!displayedIndices.length) return;
+  const position = displayedIndices.indexOf(activeIndex);
+  showPerson(displayedIndices[(position + direction + displayedIndices.length) % displayedIndices.length]);
+}
+
 function showPerson(index) {
   if (!students.length) return;
   activeIndex = (index + students.length) % students.length;
@@ -71,13 +117,33 @@ function showPerson(index) {
         "Portrait unavailable";
     });
   document.querySelector("#profilePosition").textContent =
-    `${activeIndex + 1} / ${students.length}`;
+    `${displayedIndices.indexOf(activeIndex) + 1} / ${students.length}`;
   document.querySelector("#prevPerson").disabled = students.length < 2;
   document.querySelector("#nextPerson").disabled = students.length < 2;
   if (!dialog.open) dialog.showModal();
 }
 
 function render() {
+  const today = birthdayToday();
+  renderedBirthdayDay = today;
+  const ordered = students.map((person, index) => ({ person, index, birthday: nextBirthday(person.birthday, today) }));
+  if (sortOrder === "birthday") ordered.sort((a, b) =>
+    (a.birthday?.days ?? Infinity) - (b.birthday?.days ?? Infinity) || a.index - b.index);
+  displayedIndices = ordered.map(entry => entry.index);
+  const summary = document.querySelector("#birthdaySummary");
+  summary.hidden = sortOrder !== "birthday";
+  if (sortOrder === "birthday") {
+    const first = ordered.find(entry => entry.birthday);
+    if (first) {
+      const names = ordered.filter(entry => entry.birthday?.days === first.birthday.days)
+        .map(entry => entry.person.name).join(", ");
+      summary.textContent = `Next up: ${names} · ${birthdayTiming(first.birthday)}. Dates use India time.`;
+      const year = new Date(today).getUTCFullYear();
+      if (new Date(Date.UTC(year, 1, 29)).getUTCMonth() !== 1 &&
+        ordered.some(entry => entry.birthday?.month === 2 && entry.birthday.day === 29))
+        summary.textContent += " February 29 birthdays are shown on March 1 in non-leap years.";
+    } else summary.textContent = "No birthdays have been added yet.";
+  }
   document.body.dataset.mode = mode;
   document
     .querySelector("#tableBtn")
@@ -107,7 +173,7 @@ function render() {
       "No profiles yet. Each story starts with a photo, a few words, and permission to share.";
     grid.append(empty);
   }
-  students.forEach((person, index) => {
+  ordered.forEach(({ person, index, birthday }) => {
     const tile = document.createElement("button");
     tile.className = "tile";
     tile.setAttribute(
@@ -118,6 +184,12 @@ function render() {
       mode === "table"
         ? `<span class="poster"><span class="poster-top"><span>EP / ${String(index + 1).padStart(2, "0")}</span><span>${esc(person.property || "A story in the making")}</span></span><span class="poster-symbol" aria-hidden="true">${esc(person.initials || "?")}</span>${person.photo ? `<img src="${esc(person.photo)}" alt="Portrait of ${esc(person.name)}" loading="lazy">` : ""}<span class="poster-quote">“${esc(person.quote || "Their story is coming soon.")}”</span></span><span class="tile-footer"><span><strong>${esc(person.name)}</strong><small>${person.example ? "Sample profile" : "Engineering Physics"}</small></span><span aria-hidden="true">↗</span></span>`
         : `<span class="number">${String(index + 1).padStart(2, "0")}</span><strong>${esc(person.name)}</strong><span class="record-line">${esc(person.property || "A story in the making")}</span><span class="tile-arrow" aria-hidden="true">↗</span>`;
+    if (sortOrder === "birthday") {
+      const date = document.createElement("small");
+      date.className = "birthday-preview";
+      date.textContent = birthdayTiming(birthday);
+      tile.querySelector(mode === "table" ? ".tile-footer > span" : ".record-line").append(date);
+    }
     const image = tile.querySelector("img");
     if (image) image.addEventListener("error", () => image.remove());
     tile.addEventListener("click", () => showPerson(index));
@@ -135,6 +207,10 @@ document.querySelector("#recordBtn").addEventListener("click", () => {
   mode = "record";
   render();
 });
+document.querySelector("#profileSort").addEventListener("change", event => {
+  sortOrder = event.target.value;
+  render();
+});
 document
   .querySelector("#randomBtn")
   .addEventListener("click", () =>
@@ -145,10 +221,10 @@ document
   .addEventListener("click", () => dialog.close());
 document
   .querySelector("#prevPerson")
-  .addEventListener("click", () => showPerson(activeIndex - 1));
+  .addEventListener("click", () => stepPerson(-1));
 document
   .querySelector("#nextPerson")
-  .addEventListener("click", () => showPerson(activeIndex + 1));
+  .addEventListener("click", () => stepPerson(1));
 dialog.addEventListener("click", (event) => {
   const rect = dialog.getBoundingClientRect();
   if (
@@ -163,13 +239,21 @@ dialog.addEventListener("click", (event) => {
 dialog.addEventListener("keydown", (event) => {
   if (event.key === "ArrowLeft") {
     event.preventDefault();
-    showPerson(activeIndex - 1);
+    stepPerson(-1);
   }
   if (event.key === "ArrowRight") {
     event.preventDefault();
-    showPerson(activeIndex + 1);
+    stepPerson(1);
   }
 });
+function refreshBirthdayOrder() {
+  if (sortOrder === "birthday" && !dialog.open && birthdayToday() !== renderedBirthdayDay) render();
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refreshBirthdayOrder();
+});
+dialog.addEventListener("close", refreshBirthdayOrder);
+setInterval(refreshBirthdayOrder, 60000);
 render();
 
 document.querySelector("#shuffleBtn").addEventListener("click", () => {

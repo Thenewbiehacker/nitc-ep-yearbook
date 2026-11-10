@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "test": "node --test tests/backend.test.js tests/worker.test.js",
-    "test:ui": "node tests/check.cjs && node tests/full-flow.cjs",
+    "test:ui": "node tests/check.cjs && node tests/birthday-sort.cjs && node tests/full-flow.cjs",
     "build:cloudflare": "node scripts/build-cloudflare.mjs",
     "dev:cloudflare": "npm run build:cloudflare && wrangler dev",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy",

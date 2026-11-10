@@ -15,7 +15,27 @@ const path = require("node:path");
   await page.locator(".tile").first().waitFor();
   assert.equal(await page.locator(".tile").count(), 3);
   assert.equal(await page.locator(".placeholder").count(), 0);
-  await page.locator("#shuffleBtn").click();
+  const archiveNames = await page.locator(".tile strong").allTextContents();
+  // Fix the random draws so this rejects sequential cycling without flaky odds.
+  for (const [draws, expected] of [
+    [[0, 0.99], "Student Three"],
+    [[0.99, 0.99, 0], "Student Two"],
+  ]) {
+    await page.evaluate((values) => {
+      window.originalRandom = Math.random;
+      Math.random = () => values.shift() ?? 0;
+    }, draws);
+    await page.locator("#shuffleBtn").click();
+    await page.evaluate(() => { Math.random = window.originalRandom; });
+    assert.equal(await page.locator("#profile").evaluate(el => el.open), true);
+    assert.equal(await page.locator("#profileName").textContent(), expected);
+    assert.equal(await page.locator('.quote-card[data-slot="0"] .card-bottom > span').first().textContent(), expected);
+    const cards = await page.locator(".quote-card .card-bottom > span:first-child").allTextContents();
+    assert.deepEqual([...cards].sort(), [...archiveNames].sort());
+    assert.deepEqual(await page.locator(".tile strong").allTextContents(), archiveNames);
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator("#shuffleBtn").evaluate(el => el === document.activeElement), true);
+  }
   assert.equal(await page.locator("#deckPosition").textContent(), "2 / 3");
   await page.locator('.quote-card[data-slot="0"]').click();
   assert.equal(await page.locator("#profileName").textContent(), "Student Two");
@@ -98,6 +118,12 @@ const path = require("node:path");
     render();
   });
   assert.equal(await page.locator(".tile img").count(), 0);
+  await page.evaluate(() => {
+    students.splice(1);
+    render();
+  });
+  assert.equal(await page.locator(".quote-card").count(), 1);
+  assert.equal(await page.locator("#shuffleBtn").isDisabled(), true);
   await page.evaluate(() => {
     students.splice(0);
     render();

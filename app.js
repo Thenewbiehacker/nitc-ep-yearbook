@@ -16,13 +16,15 @@ const esc = (value) =>
       ],
   );
 
-let deckIndex = 0;
+let deckOrder = [];
 function renderDeck() {
+  if (deckOrder.length !== students.length)
+    deckOrder = students.map((_, index) => index);
   const deck = document.querySelector("#quoteDeck");
   deck.replaceChildren();
   const count = Math.min(3, students.length);
   for (let slot = count - 1; slot >= 0; slot--) {
-    const index = (deckIndex + slot) % students.length;
+    const index = deckOrder[slot];
     const person = students[index];
     const card = document.createElement("button");
     card.className = "quote-card";
@@ -38,7 +40,7 @@ function renderDeck() {
     deck.innerHTML =
       '<p class="empty-state">The first story is still to come.</p>';
   document.querySelector("#deckPosition").textContent = count
-    ? `${deckIndex + 1} / ${students.length}`
+    ? `${deckOrder[0] + 1} / ${students.length}`
     : "";
   document.querySelector("#shuffleBtn").disabled = students.length < 2;
 }
@@ -201,7 +203,6 @@ function render() {
     tile.addEventListener("click", () => showPerson(index));
     grid.append(tile);
   });
-  deckIndex = students.length ? deckIndex % students.length : 0;
   renderDeck();
 }
 
@@ -264,8 +265,18 @@ render();
 
 document.querySelector("#shuffleBtn").addEventListener("click", () => {
   if (!students.length) return;
-  deckIndex = (deckIndex + 1) % students.length;
+  const previousTop = deckOrder[0];
+  // Fisher–Yates mixes the entire deck, including stories behind the visible cards.
+  for (let i = deckOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deckOrder[i], deckOrder[j]] = [deckOrder[j], deckOrder[i]];
+  }
+  if (deckOrder.length > 1 && deckOrder[0] === previousTop) {
+    const j = 1 + Math.floor(Math.random() * (deckOrder.length - 1));
+    [deckOrder[0], deckOrder[j]] = [deckOrder[j], deckOrder[0]];
+  }
   renderDeck();
+  showPerson(deckOrder[0]);
 });
 
 // Local file previews use fictional samples; the running server uses only approved profiles.

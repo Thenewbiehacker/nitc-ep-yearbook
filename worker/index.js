@@ -1,11 +1,14 @@
 function validBirthday(value) {
   if (
     typeof value !== "string" ||
-    !/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(value)
+    !/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$/.test(value)
   )
     return false;
-  const [month, day] = value.split("-").map(Number);
-  return day <= [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  const [day, month, year] = value.split("-").map(Number);
+  const date = new Date(`${value.slice(6)}-${value.slice(3, 5)}-${value.slice(0, 2)}T00:00:00Z`);
+  return year > 0 && date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 && date.getUTCDate() === day &&
+    date <= new Date();
 }
 const encoder = new TextEncoder();
 const hash = async (value) =>
@@ -285,7 +288,7 @@ async function handle(req, env) {
         "Enter a name (2–80 characters), a quote (up to 240), a description (up to 60), and initials of up to 4 characters.",
       );
     if (!validBirthday(form.get("birthday")))
-      return error("Birthday is required. Enter a valid date in MM-DD format, such as 02-29.");
+      return error("Birthday is required. Enter a valid date in DD-MM-YYYY format, such as 29-02-2004, that is not in the future.");
     if (form.get("consent") !== "true")
       return error("Your permission to publish is required.");
     let photo = null;
@@ -322,7 +325,7 @@ async function handle(req, env) {
       photo ? Array.from(photo) : null,
       photo ? "image/jpeg" : null,
       await hash(secret),
-      "birthday-v2",
+      "birthday-full-date-v3",
       now,
       now,
     ).run();

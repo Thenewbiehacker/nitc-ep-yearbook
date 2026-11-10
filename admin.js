@@ -12,6 +12,12 @@ const esc = (value) =>
         c
       ],
   );
+function formatBirthday(value) {
+  if (/^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(value)) return value;
+  // Older profiles only supplied MM-DD; their birth year is unknown.
+  const [month, day] = value.split("-");
+  return `${day}-${month} (year not provided)`;
+}
 function status(text, error = false) {
   statusBox.textContent = text;
   statusBox.classList.toggle("error", error);
@@ -44,7 +50,7 @@ async function load() {
     for (const person of result.submissions) {
       const card = document.createElement("article");
       card.className = "review-card";
-      card.innerHTML = `<div>${person.has_photo ? `<img class="review-photo" src="/api/admin/photos/${person.id}" alt="Submitted portrait of ${esc(person.name)}">` : `<span class="review-photo" aria-hidden="true">${esc(person.initials)}</span>`}</div><div><p class="review-meta">Submission ${person.id} · ${esc(person.status)}</p><h2>${esc(person.name)}</h2><p>${esc(person.property)}</p>${person.birthday ? `<p>Birthday: ${esc(person.birthday)} (month-day)</p>` : ""}<blockquote>“${esc(person.quote)}”</blockquote><p class="review-meta">Consent recorded ${esc(new Date(person.consent_at).toLocaleString())}<br>Consent version: ${esc(person.consent_version)}</p><div class="action-row">${person.status !== "approved" ? `<button class="solid-button" data-action="approved" data-id="${person.id}">Approve & publish</button>` : ""}${person.status !== "rejected" ? `<button class="outline-button" data-action="rejected" data-id="${person.id}">${person.status === "approved" ? "Unpublish & reject" : "Reject"}</button>` : ""}${person.status === "rejected" ? `<button class="outline-button" data-action="pending" data-id="${person.id}">Return to review</button>` : ""}<button class="outline-button danger" data-action="delete" data-id="${person.id}">Delete permanently</button></div></div>`;
+      card.innerHTML = `<div>${person.has_photo ? `<img class="review-photo" src="/api/admin/photos/${person.id}" alt="Submitted portrait of ${esc(person.name)}">` : `<span class="review-photo" aria-hidden="true">${esc(person.initials)}</span>`}</div><div><p class="review-meta">Submission ${person.id} · ${esc(person.status)}</p><h2>${esc(person.name)}</h2><p>${esc(person.property)}</p>${person.birthday ? `<p>Birthday: ${esc(formatBirthday(person.birthday))}</p>` : ""}<blockquote>“${esc(person.quote)}”</blockquote><p class="review-meta">Consent recorded ${esc(new Date(person.consent_at).toLocaleString())}<br>Consent version: ${esc(person.consent_version)}</p><div class="action-row">${person.status !== "approved" ? `<button class="solid-button" data-action="approved" data-id="${person.id}">Approve & publish</button>` : ""}${person.status !== "rejected" ? `<button class="outline-button" data-action="rejected" data-id="${person.id}">${person.status === "approved" ? "Unpublish & reject" : "Reject"}</button>` : ""}${person.status === "rejected" ? `<button class="outline-button" data-action="pending" data-id="${person.id}">Return to review</button>` : ""}<button class="outline-button danger" data-action="delete" data-id="${person.id}">Delete permanently</button></div></div>`;
       list.append(card);
     }
     if (!result.submissions.length) {

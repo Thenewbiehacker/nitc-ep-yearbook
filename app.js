@@ -41,22 +41,10 @@ function renderDeck() {
 }
 
 function formatBirthday(value) {
-  const [month, day] = value.split("-").map(Number);
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  return `${day} ${months[month - 1]}`;
+  if (/^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(value)) return value;
+  // Older profiles only supplied MM-DD; their birth year is unknown.
+  const [month, day] = value.split("-");
+  return `${day}-${month} (year not provided)`;
 }
 
 function showPerson(index) {

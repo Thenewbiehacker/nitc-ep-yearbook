@@ -12,8 +12,10 @@ and moderated submissions. Design references are in `DESIGN.md`.
 
 ## Student → archive
 
-1. Anyone with the link can submit their name, quote, description, birthday (month and day only), photo,
-   and consent. Students do not need accounts or an invitation code.
+1. Anyone with the link can submit their name, quote, description, birthday (DD-MM-YYYY, including the birth year), photo,
+   and consent. Birthday and photo are required. The full birthday is public after
+   approval. Older profiles keep their existing month and day without an invented year.
+   Students do not need accounts or an invitation code.
 2. Submissions remain private until an admin checks and approves them.
 3. Approved profiles appear publicly on the next page load. Rejecting an approved
    profile removes it from public view immediately.

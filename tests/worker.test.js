@@ -95,7 +95,7 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
     name: "Alice Example",
     quote: "Hello",
     property: "Kind",
-    birthday: "02-29",
+    birthday: "29-02-2004",
     consent: "true",
   }))
     form.set(k, v);
@@ -141,7 +141,7 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
   );
   const approved = (await (await call("/api/profiles")).json()).profiles;
   assert.equal(approved.length, 1);
-  assert.equal(approved[0].birthday, "02-29");
+  assert.equal(approved[0].birthday, "29-02-2004");
   assert.equal(
     (await call(`/api/photos/${id}`)).headers.get("content-type"),
     "image/jpeg",
@@ -201,16 +201,26 @@ test("D1 API preserves privacy, moderation, sessions, withdrawal and limits", as
   );
 });
 
-test("birthdays require a valid month and day", async () => {
+test("birthdays require a valid past date in DD-MM-YYYY format", async () => {
   const env = {
     DB: database(),
     ADMIN_PASSWORD: "a secure password 123",
     ASSETS: { fetch: async () => new Response("asset") },
   };
   for (const [birthday, expected] of [
-    ["02-30", 400],
-    ["04-31", 400],
-    ["02-29", 201],
+    ["02-29", 400],
+    ["29-02", 400],
+    ["02-29-2004", 400],
+    ["2004-02-29", 400],
+    ["30-02-2004", 400],
+    ["31-04-2004", 400],
+    ["29-02-2007", 400],
+    ["29-02-1900", 400],
+    ["01-01-0000", 400],
+    [`01-01-${new Date().getUTCFullYear() + 1}`, 400],
+    ["29-02-2000", 201],
+    ["31-12-2007", 201],
+    ["29-02-2004", 201],
     ["", 400],
     [" ", 400],
     [undefined, 400],

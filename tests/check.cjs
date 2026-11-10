@@ -80,6 +80,19 @@ const path = require("node:path");
     );
     await page.locator("#tableBtn").click();
   }
+  for (const [birthday, displayed] of [
+    ["29-02-2004", "Birthday · 29-02-2004"],
+    ["02-29", "Birthday · 29-02 (year not provided)"],
+    [null, null],
+  ]) {
+    await page.evaluate((value) => {
+      students[0].birthday = value;
+      showPerson(0);
+    }, birthday);
+    if (displayed) assert.equal(await page.locator(".birthday").textContent(), displayed);
+    else assert.equal(await page.locator(".birthday").count(), 0);
+    await page.keyboard.press("Escape");
+  }
   await page.evaluate(() => {
     students[0].name = "<img src=x onerror=alert(1)>";
     render();

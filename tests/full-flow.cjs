@@ -95,8 +95,15 @@ const { randomBytes } = require("node:crypto");
     const birthdayInput = page.locator("[name=birthday]");
     assert.equal(await birthdayInput.evaluate((input) => input.required), true);
     assert.equal(await birthdayInput.evaluate((input) => input.validity.valueMissing), true);
+    assert.match(await birthdayInput.getAttribute("placeholder"), /DD-MM-YYYY/);
     await birthdayInput.fill("02-29");
+    assert.equal(await birthdayInput.evaluate((input) => input.validity.patternMismatch), true);
+    await birthdayInput.fill("29-02-2007");
     await page.locator("[name=consent]").check();
+    await page.getByRole("button", { name: "Send for review" }).click();
+    await page.locator("#formStatus").filter({ hasText: "DD-MM-YYYY" }).waitFor();
+    assert.equal(await page.locator("#submissionSuccess").isVisible(), false);
+    await birthdayInput.fill("29-02-2004");
     await page.getByRole("button", { name: "Send for review" }).click();
     await page.locator("#submissionSuccess").waitFor({ state: "visible" });
     const privateLink = await page.locator("#privateLink").inputValue();
@@ -118,7 +125,7 @@ const { randomBytes } = require("node:crypto");
     const metadata = await sharp(await uploaded.body()).metadata();
     assert.ok(metadata.width <= 1000 && metadata.height <= 1200);
     assert.equal(metadata.exif, undefined);
-    assert.match(await page.locator("#reviewList").textContent(), /02-29/);
+    assert.match(await page.locator("#reviewList").textContent(), /29-02-2004/);
     await page.getByRole("button", { name: "Approve & publish" }).click();
     await page.getByText("No submissions in this view.").waitFor();
     await page.goto(origin);
@@ -127,7 +134,7 @@ const { randomBytes } = require("node:crypto");
     await page.locator(".tile").click();
     assert.match(
       await page.locator("#profileContent").textContent(),
-      /29 February/,
+      /29-02-2004/,
     );
     await page.keyboard.press("Escape");
     assert.match(

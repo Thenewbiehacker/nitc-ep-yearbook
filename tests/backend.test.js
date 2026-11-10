@@ -37,7 +37,7 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
       initials: "Ts",
       quote: "<script>not executable</script>",
       property: "Always curious",
-      birthday: "02-29",
+      birthday: "29-02-2004",
       consent: "true",
       ...changes,
     }))
@@ -110,8 +110,8 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
         assert.match((await response.json()).error, /photo/i);
       }
     });
-    await t.test("birthday is required and must be a real month and day", async () => {
-      for (const birthday of [undefined, "", " ", "02-30", "04-31"]) {
+    await t.test("birthday requires a real date in DD-MM-YYYY format", async () => {
+      for (const birthday of [undefined, "", " ", "02-29", "29-02", "02-29-2004", "2004-02-29", "30-02-2004", "31-04-2004", "29-02-2007", "29-02-1900", "01-01-0000", `01-01-${new Date().getUTCFullYear() + 1}`]) {
         const body = form();
         if (birthday === undefined) body.delete("birthday");
         else body.set("birthday", birthday);
@@ -194,6 +194,8 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
         ).submissions;
         assert.equal(rows.length, 1);
         assert.ok(rows[0].consent_at);
+        assert.equal(rows[0].birthday, "29-02-2004");
+        assert.equal(rows[0].consent_version, "birthday-full-date-v3");
         assert.equal(rows[0].withdrawal_hash, undefined);
         const photoResponse = await request(
           `/api/admin/photos/${submission.id}`,
@@ -216,6 +218,7 @@ test("submission privacy, moderation, authentication, photos, withdrawal and per
         const profiles = (await (await request("/api/profiles")).json())
           .profiles;
         assert.equal(profiles.length, 1);
+        assert.equal(profiles[0].birthday, "29-02-2004");
         assert.equal(profiles[0].quote, "<script>not executable</script>");
         assert.equal(profiles[0].withdrawal_hash, undefined);
         assert.equal(profiles[0].consent_at, undefined);

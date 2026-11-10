@@ -17,15 +17,18 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const token = () => randomBytes(32).toString("base64url");
-const consentVersion = "birthday-v2";
+const consentVersion = "birthday-full-date-v3";
 function validBirthday(value) {
   if (
     typeof value !== "string" ||
-    !/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(value)
+    !/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$/.test(value)
   )
     return false;
-  const [month, day] = value.split("-").map(Number);
-  return day <= [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  const [day, month, year] = value.split("-").map(Number);
+  const date = new Date(`${value.slice(6)}-${value.slice(3, 5)}-${value.slice(0, 2)}T00:00:00Z`);
+  return year > 0 && date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 && date.getUTCDate() === day &&
+    date <= new Date();
 }
 
 export function createApp(config = {}) {
@@ -184,7 +187,7 @@ export function createApp(config = {}) {
         return res
           .status(400)
           .json({
-            error: "Birthday is required. Enter a valid date in MM-DD format, such as 02-29.",
+            error: "Birthday is required. Enter a valid date in DD-MM-YYYY format, such as 29-02-2004, that is not in the future.",
           });
       if (body.consent !== "true")
         return res
